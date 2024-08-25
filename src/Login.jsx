@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import "./login.css";
+import backgroundImage from "./assets/airplane.jpeg";
 
 function LoginForm(){
     const [email, setEmail] = useState("");
@@ -49,26 +51,34 @@ function LoginForm(){
     };
 
     return(
-        <div className="container" style={{ marginTop: "10vh"}}>
-            <form onSubmit={handleSubmit}>
-                <h2>Login</h2>
-                {error && <div className="error">{error}</div>}
-                <div className="login">
-                    <label htmlFor="email" className="formLabel">
-                        Email Address:
-                    </label>
-                    <input type="email" name="email" className="formInput" required value={email} onChange={handleInput}/>
+        <div className="page-container">
+            <nav className="top-nav">
+                <div className="nav-links">
+                    <a href="#">Home</a>
+                    <a href="#">Contact Us</a>
                 </div>
-                <div className="password">
-                    <label htmlFor="password" className="formLabel">
-                        Password:
-                    </label>
-                    <input type="password" name="password" className="formInput" required value={password} onChange={handleInput}/>
-                </div>
-                <button type="submit" className="btn">
-                    Log-in 
-                </button>
-            </form>
+            </nav>
+            <div className="login-container" style={{backgroundImage: `url(${backgroundImage})`}}>
+                <form onSubmit={handleSubmit}>
+                    <h2>Login</h2>
+                    {error && <div className="error">{error}</div>}
+                    <div className="input-group">
+                        <label htmlFor="email" className="formLabel">
+                            Email Address:
+                        </label>
+                        <input type="email" name="email" className="formInput" required value={email} onChange={handleInput}/>
+                    </div>
+                    <div className="input-group">
+                        <label htmlFor="password" className="formLabel">
+                            Password:
+                        </label>
+                        <input type="password" name="password" className="formInput" required value={password} onChange={handleInput}/>
+                    </div>
+                    <button type="submit" className="btn">
+                        Log-in 
+                    </button>
+                </form>
+            </div>
         </div>
     );
 }
