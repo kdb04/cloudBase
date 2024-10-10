@@ -11,12 +11,10 @@ const HomePage = () => {
                 </div>
                 <div className="nav-links">
                     <Link to="/">Home</Link>
-                    <Link to="/flights">Flights</Link>
-                    <Link to="/terminals">Terminals</Link>
-                    <Link to="/services">Services</Link>
+                    <Link to="/login">Login</Link>
+                    <Link to="/booking">Booking</Link>
                     <Link to="/about">About</Link>
                     <Link to="/contact">Contact</Link>
-                    <Link to="/login" className="login-btn">Login</Link>
                 </div>
             </nav>
 
@@ -24,49 +22,44 @@ const HomePage = () => {
             <section className="hero">
                 <h1>Welcome to AirportManager</h1>
                 <p>Streamline your airport operations with our cutting-edge management system</p>
-                <button className="cta-button">Get Started</button>
             </section>
 
-            <section className="features">
-                <h2>Our Features</h2>
-                <div className="feature-grid">
-                    <div className="feature-item">
-                        <h3>Flight Tracking</h3>
-                        <p>Real-time updates on all incoming and outgoing flights</p>
-                    </div>
-                     <div className="feature-item">
-                        <h3>Terminal Management</h3>
-                        <p>Efficiently manage gate assignments and passenger flow</p>
-                    </div>
-                    <div className="feature-item">
-                        <h3>Resource Allocation</h3>
-                        <p>Optimize staff and equipment distribution across the airport</p>
-                    </div>
-                    <div className="feature-item">
-                        <h3>Passenger Services</h3>
-                        <p>Enhance traveler experience with integrated service management</p>
-                    </div>
+           <div className="info-grid">
+                <div className="info-card security-alerts">
+                    <h2>Security Alerts:</h2>
+                    <p>No current security alerts. Airport operating normally</p>
                 </div>
-            </section>
 
-            <section className="stats">
-                <h2>AirportManager in Numbers</h2>
-                <div className="stats-grid">
-                    <div className="stat-item">
-                        <span className="stat-number">500+</span>
-                        <span className="stat-label">Airports Served</span>
-                    </div>
-                    <div className="stat-item">
-                        <span className="stat-number">1M+</span>
-                        <span className="stat-label">Flights Managed Daily</span>
-                    </div>
-                    <div className="stat-item">
-                        <span className="stat-number">99.9%</span>
-                        <span className="stat-label">Uptime</span>
+                <div className="info-card weather-updates">
+                    <h2>Weather Updates:</h2>
+                    
+                </div>
+
+                <div className="info-card travel-guidelines">
+                    <h2>Travel Guidelines:</h2>
+                    <p>Essential information for a smooth journey</p>
+                    <div className="hover-content">
+                        <ul>
+                            <li>Arrive 2 hours before domestic flights</li>
+                            <li>Have ID and boarding pass ready</li>
+                            <li>Follow provided guidelines for carry-on items</li>
+                        </ul>
                     </div>
                 </div>
-            </section>
-        </main>
+
+                <div className="info-card health-guidelines">
+                    <h2>Health Guidelines:</h2>
+                    <p>Stay informed about health protocols</p>
+                    <div className="hover-content">
+                        <ul>
+                            <li>Masks recommended for sick individuals</li>
+                            <li>Maintain social distancing if required</li>
+                            <li>Provide information incase of specific illness</li>
+                        </ul>
+                    </div>
+                </div>
+           </div>
+        </main>        
 
         <footer className="footer">
             <p>&copy; 2024 AirportManager. All rights reserved.</p>
