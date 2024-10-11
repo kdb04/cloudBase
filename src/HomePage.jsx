@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaPlane } from "react-icons/fa";
 import "./homepage.css";
 
 const HomePage = () => {
@@ -32,7 +33,7 @@ const HomePage = () => {
 
                 <div className="info-card weather-updates">
                     <h2>Weather Updates:</h2>
-                    
+
                 </div>
 
                 <div className="info-card travel-guidelines">
@@ -59,10 +60,46 @@ const HomePage = () => {
                     </div>
                 </div>
            </div>
-        </main>        
+           <div className="airline-section">
+                <div className="airlines-container">
+                    <div className="airlines-heading">
+                        <p>Airlines that travels with us</p>
+                        <FaPlane />
+                    </div>
+                    <div className="airline-logos">
+                        <img src="/assets/airindia.png" alt="1" />
+                        <img src="/assets/indigo.png" alt="2" />
+                        <img src="/assets/airasia.png" alt="3" />
+                        <img src="/assets/spicejet.png" alt="4" />
+                        <img src="/assets/vistara.jpeg" alt="5" />
+                        <img src="/assets/airfrance.png" alt="6" />
+                        <img src="/assets/britishairways.png" alt="7" />
+                        <img src="/assets/emirates.png" alt="8" />
+                        <img src="/assets/etihad.png" alt="9" />
+                        <img src="/assets/klm.png" alt="10" />
+                        <img src="/assets/lufthansa.jpg" alt="11" />
+                        <img src="/assets/qatarairways.png" alt="12" />
+                    </div>
+                </div>
+            </div>
+        </main>
 
         <footer className="footer">
             <p>&copy; 2024 AirportManager. All rights reserved.</p>
+            <div className="social-icons">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                    <FaFacebook />
+                </a>
+                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                    <FaTwitter />
+                </a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                    <FaInstagram />
+                </a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="Linkedin">
+                    <FaLinkedin />
+                </a>
+            </div>
         </footer>
     </div>
   );

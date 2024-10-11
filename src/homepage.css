@@ -99,3 +99,60 @@
     margin-top: auto;
 }
 
+.social-icons a{
+    color: white;
+    font-size: 24px;
+    margin: 0 10px;
+}
+
+.social-icons a:hover{
+    color: #007bff;
+}
+
+.airline-section{
+    margin-top: 30px;
+}
+
+.airlines-container{
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.airlines-heading{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.airlines-heading h2 {
+    margin-left: 10px;
+}
+
+.airline-logos {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease, opacity 0.5s ease;
+    opacity: 0;
+}
+
+.airlines-container:hover .airline-logos {
+    max-height: 300px;  
+    opacity: 1;
+    margin-top: 20px;
+}
+
+.airline-logos img {
+    width: 100px;
+    height: auto;
+    object-fit: contain;
+}
+
+
