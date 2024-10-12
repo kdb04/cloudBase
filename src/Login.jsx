@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 import "./login.css";
 import backgroundImage from "./assets/airplane.jpeg";
 
@@ -50,37 +52,64 @@ function LoginForm(){
         return valid.test(email);
     };
 
-    return(
-        <div className="page-container">
+    return (
+        <div className="page-container" style={{ backgroundImage: `url(${backgroundImage})` }}>
             <nav className="top-nav">
+                <div className="nav-logo">
+                    <Link to="/">AirportManager</Link>
+                </div>
                 <div className="nav-links">
-                    <a href="#">Home</a>
-                    <a href="#">Contact Us</a>
+                    <Link to="/">Home</Link>
+                    <Link to="/login">Login</Link>
+                    <Link to="/booking">Booking</Link>
+                    <Link to="/about">About</Link>
+                    <Link to="/contact">Contact</Link>
                 </div>
             </nav>
-            <div className="login-container" style={{backgroundImage: `url(${backgroundImage})`}}>
-                <form onSubmit={handleSubmit}>
-                    <h2>Login</h2>
-                    {error && <div className="error">{error}</div>}
-                    <div className="input-group">
-                        <label htmlFor="email" className="formLabel">
-                            Email Address:
-                        </label>
-                        <input type="email" name="email" className="formInput" required value={email} onChange={handleInput}/>
-                    </div>
-                    <div className="input-group">
-                        <label htmlFor="password" className="formLabel">
-                            Password:
-                        </label>
-                        <input type="password" name="password" className="formInput" required value={password} onChange={handleInput}/>
-                    </div>
-                    <button type="submit" className="btn">
-                        Log-in 
-                    </button>
-                </form>
-            </div>
+
+            <main className="main-content">
+                <div className="login-container">
+                    <h2>Login to AirportManager</h2>
+                    {error && <div className="error-message">{error}</div>}
+                    <form onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label htmlFor="email">Email Address:</label>
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                value={email}
+                                onChange={handleInput}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="password">Password:</label>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                value={password}
+                                onChange={handleInput}
+                                required
+                            />
+                        </div>
+                        <button type="submit" className="login-button">Log in</button>
+                    </form>
+                </div>
+            </main>
+
+            <footer className="footer">
+                <p>&copy; 2024 AirportManager. All rights reserved.</p>
+                <div className="social-icons">
+                    <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><FaFacebook /></a>
+                    <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><FaTwitter /></a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"><FaInstagram /></a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer"><FaLinkedin /></a>
+                </div>
+            </footer>
         </div>
     );
-}
+}   
 
 export default LoginForm;
