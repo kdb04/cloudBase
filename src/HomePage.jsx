@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaPlane } from "react-icons/fa";
 import "./homepage.css";
+import AirlineLogos from "./airlines.jsx";
 
 const HomePage = () => {
     return(
@@ -63,22 +64,9 @@ const HomePage = () => {
            <div className="airline-section">
                 <div className="airlines-container">
                     <div className="airlines-heading">
-                        <p>Airlines that travels with us</p>
-                        <FaPlane />
                     </div>
                     <div className="airline-logos">
-                        <img src="/assets/airindia.png" alt="1" />
-                        <img src="/assets/indigo.png" alt="2" />
-                        <img src="/assets/airasia.png" alt="3" />
-                        <img src="/assets/spicejet.png" alt="4" />
-                        <img src="/assets/vistara.jpeg" alt="5" />
-                        <img src="/assets/airfrance.png" alt="6" />
-                        <img src="/assets/britishairways.png" alt="7" />
-                        <img src="/assets/emirates.png" alt="8" />
-                        <img src="/assets/etihad.png" alt="9" />
-                        <img src="/assets/klm.png" alt="10" />
-                        <img src="/assets/lufthansa.jpg" alt="11" />
-                        <img src="/assets/qatarairways.png" alt="12" />
+                        <AirlineLogos /> 
                     </div>
                 </div>
             </div>
