@@ -1,0 +1,137 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.booking-container {
+    width: 100%;
+    min-height: 100vh;
+    padding: 3rem 1rem;
+    background: url("./assets/airplane.jpeg") no-repeat center center fixed;
+    background-size: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.booking-content {
+    width: 100%;
+    max-width: 800px;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 8px;
+    padding: 2rem;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+.booking-title {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.booking-form {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Rest of the CSS remains the same */
+
+.booking-options {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.booking-type,
+.travel-class {
+    display: flex;
+    gap: 1rem;
+}
+
+.option-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.option-button.active {
+    background-color: #007bff;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-input {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 0.5rem;
+}
+
+.input-icon {
+    margin-right: 0.5rem;
+}
+
+.input-icon.rotated {
+    transform: rotate(90deg);
+}
+
+.form-input input {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 100%;
+}
+
+.form-input input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+}
+
+.action-button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.action-button.cancel {
+    background-color: #dc3545;
+}
+
+.action-button.search {
+    background-color: #28a745;
+}
+
+.action-button:hover {
+    opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+    .booking-options,
+    .form-grid {
+        flex-direction: column;
+        grid-template-columns: 1fr;
+    }
+}
