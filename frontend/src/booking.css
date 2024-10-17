@@ -40,8 +40,6 @@ body, html {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Rest of the CSS remains the same */
-
 .booking-options {
     display: flex;
     justify-content: space-between;
