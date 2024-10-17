@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaPlane, FaCalendarAlt, FaUser } from 'react-icons/fa';
+import { FaPlane, FaCalendarAlt, FaUser, FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import './booking.css';
 
 const Booking = () => {
@@ -7,77 +7,99 @@ const Booking = () => {
   const [travelClass, setTravelClass] = useState('economy');
 
   return (
-    <div className="booking-container">
-      <div className="booking-content">
-        <h2 className="booking-title">Book Your Flight</h2>
+    <div className="page-container">
+      <nav className="top-nav">
+        <div className="nav-logo">
+          <a href="/">AirportManager</a>
+        </div>
+        <div className="nav-links">
+          <a href="/">Home</a>
+          <a href="/login">Login</a>
+          <a href="/booking">Booking</a>
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
+        </div>
+      </nav>
 
-        <div className="booking-form">
-          <div className="booking-options">
-            <div className="booking-type">
-              <button
-                className={`option-button ${bookingType === 'roundtrip' ? 'active' : ''}`}
-                onClick={() => setBookingType('roundtrip')}
-              >
-                Round Trip
-              </button>
-              <button
-                className={`option-button ${bookingType === 'oneway' ? 'active' : ''}`}
-                onClick={() => setBookingType('oneway')}
-              >
-                One Way
-              </button>
-            </div>
-            <div className="travel-class">
-              <button
-                className={`option-button ${travelClass === 'economy' ? 'active' : ''}`}
-                onClick={() => setTravelClass('economy')}
-              >
-                Economy
-              </button>
-              <button
-                className={`option-button ${travelClass === 'business' ? 'active' : ''}`}
-                onClick={() => setTravelClass('business')}
-              >
-                Business
-              </button>
-            </div>
-          </div>
-
-          <div className="form-grid">
-            <div className="form-input">
-              <FaPlane className="input-icon" />
-              <input type="text" placeholder="From" />
-            </div>
-            <div className="form-input">
-              <FaPlane className="input-icon rotated" />
-              <input type="text" placeholder="To" />
-            </div>
-          </div>
-
-          <div className="form-grid">
-            <div className="form-input">
-              <FaCalendarAlt className="input-icon" />
-              <input type="date" />
-            </div>
-            {bookingType === 'roundtrip' && (
-              <div className="form-input">
-                <FaCalendarAlt className="input-icon" />
-                <input type="date" />
+      <main className="main-content">
+        <div className="booking-container">
+          <div className="booking-content">
+            <h2 className="booking-title">Book Your Flight</h2>
+            <div className="booking-form">
+              <div className="booking-options">
+                <div className="booking-type">
+                  <button
+                    className={`option-button ${bookingType === 'roundtrip' ? 'active' : ''}`}
+                    onClick={() => setBookingType('roundtrip')}
+                  >
+                    Round Trip
+                  </button>
+                  <button
+                    className={`option-button ${bookingType === 'oneway' ? 'active' : ''}`}
+                    onClick={() => setBookingType('oneway')}
+                  >
+                    One Way
+                  </button>
+                </div>
+                <div className="travel-class">
+                  <button
+                    className={`option-button ${travelClass === 'economy' ? 'active' : ''}`}
+                    onClick={() => setTravelClass('economy')}
+                  >
+                    Economy
+                  </button>
+                  <button
+                    className={`option-button ${travelClass === 'business' ? 'active' : ''}`}
+                    onClick={() => setTravelClass('business')}
+                  >
+                    Business
+                  </button>
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className="form-input">
-            <FaUser className="input-icon" />
-            <input type="number" placeholder="Passengers" min="1" />
-          </div>
-
-          <div className="form-actions">
-            <button className="action-button cancel">Cancel</button>
-            <button className="action-button search">Search Flights</button>
+              <div className="form-grid">
+                <div className="form-input">
+                  <FaPlane className="input-icon" />
+                  <input type="text" placeholder="From" />
+                </div>
+                <div className="form-input">
+                  <FaPlane className="input-icon rotated" />
+                  <input type="text" placeholder="To" />
+                </div>
+              </div>
+              <div className="form-grid">
+                <div className="form-input">
+                  <FaCalendarAlt className="input-icon" />
+                  <input type="date" />
+                </div>
+                {bookingType === 'roundtrip' && (
+                  <div className="form-input">
+                    <FaCalendarAlt className="input-icon" />
+                    <input type="date" />
+                  </div>
+                )}
+              </div>
+              <div className="form-input">
+                <FaUser className="input-icon" />
+                <input type="number" placeholder="Passengers" min="1" />
+              </div>
+              <div className="form-actions">
+                <button className="action-button cancel">Cancel</button>
+                <button className="action-button search">Search Flights</button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
+
+      <footer className="footer">
+        <p>© 2024 AirportManager. All rights reserved.</p>
+        <div className="social-icons">
+          <a href="#"><FaFacebook /></a>
+          <a href="#"><FaTwitter /></a>
+          <a href="#"><FaInstagram /></a>
+          <a href="#"><FaLinkedin /></a>
+        </div>
+      </footer>
     </div>
   );
 };
