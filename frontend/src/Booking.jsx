@@ -12,6 +12,7 @@ const Booking = () => {
     const [destination, setDestination] = useState('');
     const [seatNo, setSeatNo] = useState('');
     const [flightNo, setFlightNo] = useState('');
+    const [ticketId, setTicketId] = useState(null);
     //const [testMsg, setTestMsg] = useState('');
 
     const handleBooking = async(e) => {
@@ -41,12 +42,35 @@ const Booking = () => {
             }
 
             const result = await response.json();
+            setTicketId(result.ticket_id);
             console.log('Booking successful:', result);
 
         } catch (error) {
             console.error("Error during booking:", error);
         }
     }
+
+    const handleCancel = async () => {
+        if (!ticketId) return; 
+
+        try {
+            const response = await fetch("http://localhost:3000/api/bookings", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ ticket_id: ticketId }),
+            });
+
+            if (!response.ok) throw new Error("Failed to cancel flight");
+
+            const result = await response.json();
+            setTicketId(null);
+            console.log("Booking canceled:", result);
+        } catch (error) {
+            console.error("Error during cancellation:", error);
+        }
+    };
 
     /*const fetchTestMsg = async () => {
         try{
@@ -127,7 +151,7 @@ const Booking = () => {
                                 <input type="text" placeholder="Flight Number" value={flightNo} onChange={(e) => setFlightNo(e.target.value)}/>
                             </div>
                             <div className="form-actions">
-                                <button type="button" className="action-button cancel">Cancel</button>
+                                <button type="button" className="action-button cancel" onClick={ handleCancel }>Cancel</button>
                                 <button type="submit" className="action-button submit">Submit</button>
                             </div>
                         </form>

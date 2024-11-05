@@ -14,4 +14,17 @@ const bookTicket = (req, res) => {
     });
 };
 
-module.exports = { bookTicket };
+const cancelTicket = (req, res) => {
+    const { ticket_id } = req.body;
+    const deleteQuery = `DELETE FROM ticket WHERE ticket_id = ?`;
+    
+    db.query(deleteQuery, [ticket_id], (err, results) => {
+        if (err){
+            console.error(err);
+            return res.status(500).json({ message: "Error cancelling flight", error: err});
+        }
+        return res.status(200).json({ message: "Flight booking cancelled successfully"});
+    });
+};
+
+module.exports = { bookTicket, cancelTicket };
