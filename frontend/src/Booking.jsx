@@ -25,7 +25,7 @@ const Booking = () => {
             source,
             destination,
             seat_no: seatNo,
-            flight_no: flightNo,
+            flight_id: flightNo,
         };
         try {
             const response = await fetch("http://localhost:3000/api/bookings", {
@@ -42,7 +42,7 @@ const Booking = () => {
 
             const result = await response.json();
             console.log('Booking successful:', result);
-            
+
         } catch (error) {
             console.error("Error during booking:", error);
         }
@@ -127,12 +127,12 @@ const Booking = () => {
                                 <input type="text" placeholder="Flight Number" value={flightNo} onChange={(e) => setFlightNo(e.target.value)}/>
                             </div>
                             <div className="form-actions">
-                                <button className="action-button cancel">Cancel</button>
-                                <button className="action-button search">Search Flights</button>
+                                <button type="button" className="action-button cancel">Cancel</button>
+                                <button type="submit" className="action-button submit">Submit</button>
                             </div>
                         </form>
-                        /*<button onClick={fetchTestMsg}>Fetch</button>
-                        {testMsg && <p>Test:{testMsg}</p>}*/
+                        {/*<button onClick={fetchTestMsg}>Fetch</button>
+                        {testMsg && <p>Test:{testMsg}</p>}*/}
                     </div>
                 </div>
             </main>
