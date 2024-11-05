@@ -13,6 +13,10 @@ app.use(express.json());
 
 app.use("/api/bookings", bookingRoute);
 
+/*app.get("/api/test", (req, res) => {
+    res.json({ message: "Backend-Frontend connected successfully"});
+})*/
+
 const PORT = process.env.PORT || 5000;
 
 async function startServer(){
