@@ -8,22 +8,26 @@ function LoginForm(){
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
 
     const handleInput = (event) => {
         const { name, value } = event.target;
+
         switch(name){
             case "email":
                 setEmail(value);
                 break;
+
             case "password":
                 setPassword(value);
                 break;
+
             default:
                 break;
         }
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
 
         if (!validateEmail(email)){
@@ -35,16 +39,39 @@ function LoginForm(){
             setError("Password length must be 8 characters");
             return;
         }
+
         const hasAlphabet = /[a-zA-Z]/.test(password);
         const hasDigit = /\d/.test(password);
         const hasSpecialCharacter = /[!@#$%^&*()_+{}\[\]:;<>,.?]/g.test(password);
 
-        if (!hasAlphabet | !hasDigit | !hasSpecialCharacter){
+        if (!hasAlphabet || !hasDigit || !hasSpecialCharacter){
             setError("Invalid password");
             return;
         }
 
-        onsubmit({ email, password });
+        try{
+            const response = await fetch("http://localhost:3000/api/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok){
+                throw new Error(data.message);
+            }
+
+            setSuccess(data.message);
+            setError(null);
+            console.log("User logged in", data.user);
+        }
+        catch(err){
+            setError(err.message);
+            setSuccess(null);
+        }
     };
 
     const validateEmail = (email) => {
@@ -110,6 +137,6 @@ function LoginForm(){
             </footer>
         </div>
     );
-}   
+}
 
 export default LoginForm;

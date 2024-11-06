@@ -4,6 +4,7 @@ const cors = require("cors");
 const path = require("path");
 const db = require("./connection/db.js");
 const bookingRoute = require("./routes/bookingRoute");
+const loginRoute = require("./routes/loginRoute");
 
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
@@ -12,6 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/bookings", bookingRoute);
+app.use("/api/login", loginRoute);
 
 /*app.get("/api/test", (req, res) => {
     res.json({ message: "Backend-Frontend connected successfully"});
