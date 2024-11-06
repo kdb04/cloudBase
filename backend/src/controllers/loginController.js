@@ -1,3 +1,4 @@
+const bcrypt = require("bcrypt");
 const db = require("../connection/db.js");
 
 const userLogin = async (req, res) => {
@@ -9,34 +10,43 @@ const userLogin = async (req, res) => {
 
     const userCheck = `SELECT * FROM users WHERE email=?`;
 
-    db.query(userCheck, [email], (error, results) => {
+    db.query(userCheck, [email], async (error, results) => {
         if (error) {
             return res.status(500).json({ message: "Database error", error });
         }
 
-        console.log("Query results:", results); 
+        console.log("Query results:", results);
 
         if (results.length > 0) {
             const user = results[0];
 
-            if (user.password !== password) {
+            /*if (user.password !== password) {
                 return res.status(401).json({ message: "Invalid password" });
+            }*/
+
+            const passwordMatch = await bcrypt.compare(password, user.password);
+            if (!passwordMatch){
+                return res.status(401).json({ message: "Invalid password "});
             }
-            
+
             console.log("Login successful");
             return res.status(200).json({ message: "Login successful", user });
-        } else {
-            
+        }
+        else {
+
             console.log("User not found, creating new user");
 
+            const hashedPassword = await bcrypt.hash(password, 10);
+
             const insertQuery = `INSERT INTO users (email, password) VALUES (?, ?)`;
-            db.query(insertQuery, [email, password], (insertError, insertResults) => {
+
+            db.query(insertQuery, [email, hashedPassword], (insertError, insertResults) => {
                 if (insertError) {
                     return res.status(500).json({ message: "Database error", insertError });
                 }
-                
+
                 console.log("User created successfully");
-                return res.status(201).json({ message: "User created successfully", user: { email, password } });
+                return res.status(201).json({ message: "User created successfully", user: { email, password: hashedPassword } });
             });
         }
     });
