@@ -3,7 +3,7 @@ const { bookTicket, cancelTicket, getAvailableFlights } = require("../controller
 const router = express.Router();
 
 router.post("/", bookTicket);
-router.delete("/", cancelTicket);
+router.delete("/:ticket_id", cancelTicket);
 router.get("/available-flights", getAvailableFlights);
 
 module.exports = router;

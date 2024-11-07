@@ -79,7 +79,7 @@ const Booking = () => {
         if (!ticketId) return; 
 
         try {
-            const response = await fetch(`http://localhost:3000/api/bookings/cancel/${ticketId}`, {
+            const response = await fetch(`http://localhost:3000/api/bookings/${ticketId}`, {
                 method: "DELETE",
             });
 
