@@ -11,12 +11,32 @@ const Booking = () => {
     const [source, setSource] = useState('');
     const [destination, setDestination] = useState('');
     const [seatNo, setSeatNo] = useState('');
-    const [flightNo, setFlightNo] = useState('');
+    //const [flightNo, setFlightNo] = useState('');
     const [ticketId, setTicketId] = useState(null);
     //const [testMsg, setTestMsg] = useState('');
+    const [availableFlights, setAvailableFlights] = useState([]);
+    const [selectedFlightId, setSelectedFlightId] = useState(null);
+
+    const handleSearch = async () => {
+        try{
+            const response = await fetch (`http://localhost:3000/api/bookings/available-flights?source=${source}&destination=${destination}`);
+            if (!response.ok){
+                throw new Error("Failed to fetch flight data");
+            }
+
+            const result = await response.json();
+            setAvailableFlights(result.Flights);
+        }
+        catch(err){
+            console.error("Error fetching flights:", err);
+        }
+    }
 
     const handleBooking = async(e) => {
         e.preventDefault();
+        if(!selectedFlightId){
+            return alert("Please select a flight");
+        }
 
         const bookingData = {
             passenger_no: passengerNo,
@@ -26,10 +46,11 @@ const Booking = () => {
             source,
             destination,
             seat_no: seatNo,
-            flight_id: flightNo,
+            flight_id: selectedFlightId,
         };
+
         try {
-            const response = await fetch("http://localhost:3000/api/bookings", {
+            const response = await fetch(`http://localhost:3000/api/bookings`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -42,31 +63,36 @@ const Booking = () => {
             }
 
             const result = await response.json();
-            setTicketId(result.ticket_id);
             console.log('Booking successful:', result);
 
+            setTicketId(result.ticket_id);
         } catch (error) {
             console.error("Error during booking:", error);
         }
+    }
+
+    const handleFlightSelection = (flightId) => {
+        setSelectedFlightId(flightId);
     }
 
     const handleCancel = async () => {
         if (!ticketId) return; 
 
         try {
-            const response = await fetch("http://localhost:3000/api/bookings", {
+            const response = await fetch(`http://localhost:3000/api/bookings/cancel/${ticketId}`, {
                 method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ ticket_id: ticketId }),
             });
 
-            if (!response.ok) throw new Error("Failed to cancel flight");
+            if (!response.ok) {
+                throw new Error("Failed to cancel booking");
+            }
 
             const result = await response.json();
-            setTicketId(null);
             console.log("Booking canceled:", result);
+
+            setSelectedFlightId(null);
+            setTicketId(null);
+            setAvailableFlights([]);
         } catch (error) {
             console.error("Error during cancellation:", error);
         }
@@ -147,16 +173,32 @@ const Booking = () => {
                             <div className="form-input">
                                 <input type="text" placeholder="Seat Number" value={seatNo} onChange={(e) => setSeatNo(e.target.value)}/>
                             </div>
-                            <div className="form-input">
+                            {/*<div className="form-input">
                                 <input type="text" placeholder="Flight Number" value={flightNo} onChange={(e) => setFlightNo(e.target.value)}/>
-                            </div>
+                            </div>*/}
                             <div className="form-actions">
-                                <button type="button" className="action-button cancel" onClick={ handleCancel }>Cancel</button>
-                                <button type="submit" className="action-button submit">Submit</button>
+                                <button type="button" className="action-button search" onClick={handleSearch}>Search</button>
                             </div>
                         </form>
                         {/*<button onClick={fetchTestMsg}>Fetch</button>
                         {testMsg && <p>Test:{testMsg}</p>}*/}
+                        {availableFlights.length > 0 && (
+                            <div className="flights-list">
+                                <h3>Available Flights</h3>
+                                {availableFlights.map((flight) => (
+                                    <div key={flight.flight_id} className={`flight-card ${selectedFlightId === flight.flight_id ? 'selected' : ''}`} onClick={() => handleFlightSelection(flight.flight_id)}>
+                                        <p>Flight No: {flight.flight_id}</p>
+                                        <p>Source: {flight.source}</p>
+                                        <p>Destination: {flight.destination}</p>
+                                        <p>Seats Available: {flight.available_seats}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <div className="form-actions">
+                            <button type="button" className="action-button cancel" onClick={handleCancel}>Cancel</button>
+                            <button type="submit" className="action-button submit" onClick={handleBooking}>Book Selected Flight</button>
+                        </div>
                     </div>
                 </div>
             </main>

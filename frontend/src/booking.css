@@ -122,6 +122,10 @@ body, html {
     background-color: #28a745;
 }
 
+.action-button.search {
+    background-color: #28a745;
+}
+
 .action-button:hover {
     opacity: 0.9;
 }
@@ -132,4 +136,27 @@ body, html {
         flex-direction: column;
         grid-template-columns: 1fr;
     }
+}
+
+
+.flights-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.flight-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin: 10px;
+    width: 100%;
+    max-width: 300px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.flight-card.selected {
+    background-color: #e0f7fa;
+    border-color: #00796b;
 }
