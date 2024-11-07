@@ -191,6 +191,7 @@ const Booking = () => {
                                         <p>Source: {flight.source}</p>
                                         <p>Destination: {flight.destination}</p>
                                         <p>Seats Available: {flight.available_seats}</p>
+                                        <p>Price: {flight.price}</p>
                                     </div>
                                 ))}
                             </div>
