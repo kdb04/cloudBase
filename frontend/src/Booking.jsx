@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FaPlane, FaCalendarAlt, FaUser, FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import './booking.css';
+import { useNavigate } from 'react-router-dom';
 
 const Booking = ({ isLoggedIn }) => {
     const [bookingType, setBookingType] = useState('roundtrip');
@@ -17,6 +18,7 @@ const Booking = ({ isLoggedIn }) => {
     const [availableFlights, setAvailableFlights] = useState([]);
     const [selectedFlightId, setSelectedFlightId] = useState(null);
     const [showLoginMessage, setShowLoginMessage] = useState(false);
+    const Navigate = useNavigate();
 
     useEffect(() => {
         if (!isLoggedIn){
@@ -26,6 +28,10 @@ const Booking = ({ isLoggedIn }) => {
             setShowLoginMessage(false);
         }
     }, [isLoggedIn]);
+
+    const handleLoginRedirect = () => {
+        Navigate("/Login");
+    }
 
     const handleSearch = async () => {
         try{
@@ -43,7 +49,8 @@ const Booking = ({ isLoggedIn }) => {
     }
 
     const handleBooking = async(e) => {
-        e.preventDefault();
+        e.preventDefa
+        ult();
         if(!selectedFlightId){
             return alert("Please select a flight");
         }
@@ -140,6 +147,11 @@ const Booking = ({ isLoggedIn }) => {
                 {showLoginMessage && (
                     <div className="login-overlay">
                         <p className="login-message">User Log-in required to access this feature</p>
+                        <div className="login-button-container">
+                            <button onClick={handleLoginRedirect}>
+                                Login Now!
+                            </button>
+                        </div>
                     </div>
                 )}
                 <div className={`booking-container ${showLoginMessage ? 'blurred': ''}`}>
