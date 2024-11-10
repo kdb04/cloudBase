@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 import "./login.css";
 import backgroundImage from "./assets/airplane.jpeg";
@@ -9,6 +9,7 @@ function LoginForm(){
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+    const navigate = useNavigate();
 
     const handleInput = (event) => {
         const { name, value } = event.target;
@@ -67,6 +68,8 @@ function LoginForm(){
             setSuccess(data.message);
             setError(null);
             console.log("User logged in", data.user);
+            navigate("/booking");
+
         }
         catch(err){
             setError(err.message);

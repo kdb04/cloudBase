@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaPlane, FaCalendarAlt, FaUser, FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import './booking.css';
 
-const Booking = () => {
+const Booking = ({ isLoggedIn }) => {
     const [bookingType, setBookingType] = useState('roundtrip');
     const [travelClass, setTravelClass] = useState('economy');
     const [passengerNo, setPassengerNo] = useState(1);
@@ -16,6 +16,16 @@ const Booking = () => {
     //const [testMsg, setTestMsg] = useState('');
     const [availableFlights, setAvailableFlights] = useState([]);
     const [selectedFlightId, setSelectedFlightId] = useState(null);
+    const [showLoginMessage, setShowLoginMessage] = useState(false);
+
+    useEffect(() => {
+        if (!isLoggedIn){
+            setShowLoginMessage(true);
+        }
+        else{
+            setShowLoginMessage(false);
+        }
+    }, [isLoggedIn]);
 
     const handleSearch = async () => {
         try{
@@ -127,7 +137,12 @@ const Booking = () => {
             </nav>
 
             <main className="main-content">
-                <div className="booking-container">
+                {showLoginMessage && (
+                    <div className="login-overlay">
+                        <p className="login-message">User Log-in required to access this feature</p>
+                    </div>
+                )}
+                <div className={`booking-container ${showLoginMessage ? 'blurred': ''}`}>
                     <div className="booking-content">
                         <h2 className="booking-title">Book Your Flight</h2>
                         <form className="booking-form" onSubmit={ handleBooking }>

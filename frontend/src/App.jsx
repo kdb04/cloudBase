@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import HomePage from "./HomePage";
 import LoginForm from "./Login";
@@ -7,6 +7,12 @@ import About from "./About";
 import ContactPage from "./contact";
 
 function App(){
+    const [isLoggedIn, setIsLoggenIn] = useState(false);
+
+    const handleLogin = () => {
+        setIsLoggenIn(true);
+    };
+
     return(
         <Router>
             <div className="App">
