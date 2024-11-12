@@ -1,0 +1,141 @@
+.admin-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-image: url("./assets/airplane.jpeg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.admin-page .top-nav {
+    width: 100%;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1e3a8a;
+    position: fixed;
+    top: 0;
+    z-index: 100;
+}
+
+.admin-page .nav-logo a {
+    color: #fff;
+    font-size: 1.4em;
+    text-decoration: none;
+    font-weight: bold;
+    padding-left: 1rem;
+}
+
+.admin-page .nav-links {
+    padding-right: 1rem;
+}
+
+.admin-page .nav-links a {
+    color: #fff;
+    text-decoration: none;
+    margin: 0 1rem;
+    font-size: 1em;
+    transition: color 0.3s ease;
+}
+
+.admin-page .nav-links a:hover {
+    color: #b3e5fc;
+}
+
+.admin-page .main-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5rem 2rem 4rem 2rem;
+}
+
+.admin-page .admin-container {
+    background-color: rgba(0, 0, 0, 0.85);
+    padding: 3rem;
+    border-radius: 15px;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    max-width: 450px;
+    width: 100%;
+    margin-top: 2rem;
+}
+
+.admin-page h2 {
+    font-size: 2.2rem;
+    color: #00bfff;
+    margin-bottom: 2rem;
+}
+
+.admin-page .admin-buttons,
+.admin-page .schedule-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.admin-page .admin-button {
+    padding: 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.admin-page .admin-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.admin-page .schedule-form input {
+    padding: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #444;
+    outline: none;
+    font-size: 1.1rem;
+    background-color: #333;
+    color: white;
+    transition: border-color 0.3s ease;
+}
+
+.admin-page .schedule-form input:focus {
+    border-color: #007bff;
+}
+
+.admin-page .response-message {
+    margin-top: 1.5rem;
+    font-size: 1.2em;
+    color: #ffcc00;
+}
+
+.admin-page .footer {
+    width: 100%;
+    text-align: center;
+    padding: 1rem;
+    background: #1e3a8a;
+    color: #fff;
+    margin-top: auto;
+}
+
+.admin-page .social-icons {
+    margin: 0.5rem 0;
+}
+
+.admin-page .social-icons a {
+    color: #fff;
+    margin: 0 0.8rem;
+    font-size: 1.2rem;
+    transition: color 0.3s ease;
+}
+
+.admin-page .social-icons a:hover {
+    color: #b3e5fc;
+}
