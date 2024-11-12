@@ -4,7 +4,7 @@ import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 import "./login.css";
 import backgroundImage from "./assets/airplane.jpeg";
 
-function LoginForm(){
+function LoginForm( {onLoginSuccess} ){
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
@@ -67,6 +67,7 @@ function LoginForm(){
 
             setSuccess(data.message);
             setError(null);
+            onLoginSuccess();
             console.log("User logged in", data.user);
             navigate("/booking");
 

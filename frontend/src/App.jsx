@@ -7,19 +7,19 @@ import About from "./About";
 import ContactPage from "./contact";
 
 function App(){
-    const [isLoggedIn, setIsLoggenIn] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     const handleLogin = () => {
-        setIsLoggenIn(true);
-    };
+        setIsLoggedIn(true);
+    }
 
     return(
         <Router>
             <div className="App">
                 <Routes>
                     <Route path="/" element={<HomePage />}/>
-                    <Route path="/Login" element={<LoginForm />}/>
-                    <Route path="/Booking" element={<Booking />}/>
+                    <Route path="/Login" element={<LoginForm onLoginSuccess={() => setIsLoggedIn(true)} />}/>
+                    <Route path="/Booking" element={<Booking isLoggedIn={isLoggedIn} />}/>
                     <Route path="/About" element={<About />}/>
                     <Route path="/contact" element={<ContactPage />}/>
                 </Routes>

@@ -21,12 +21,7 @@ const Booking = ({ isLoggedIn }) => {
     const Navigate = useNavigate();
 
     useEffect(() => {
-        if (!isLoggedIn){
-            setShowLoginMessage(true);
-        }
-        else{
-            setShowLoginMessage(false);
-        }
+        setShowLoginMessage(!isLoggedIn);
     }, [isLoggedIn]);
 
     const handleLoginRedirect = () => {
@@ -154,7 +149,7 @@ const Booking = ({ isLoggedIn }) => {
                         </div>
                     </div>
                 )}
-                <div className={`booking-container ${showLoginMessage ? 'blurred': ''}`}>
+                <div className={`booking-container ${!isLoggedIn ? 'blurred': ''}`}>
                     <div className="booking-content">
                         <h2 className="booking-title">Book Your Flight</h2>
                         <form className="booking-form" onSubmit={ handleBooking }>
