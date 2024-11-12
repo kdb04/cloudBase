@@ -51,6 +51,14 @@ function LoginForm( {onLoginSuccess} ){
         }
 
         try{
+            if (email === "admin@example.com"){
+                onLoginSuccess(email);
+                setSuccess("Admin Login Succesful");
+                setError(null);
+                navigate("/admin");
+                return;
+            }
+
             const response = await fetch("http://localhost:3000/api/login", {
                 method: "POST",
                 headers: {
@@ -67,9 +75,16 @@ function LoginForm( {onLoginSuccess} ){
 
             setSuccess(data.message);
             setError(null);
-            onLoginSuccess();
-            console.log("User logged in", data.user);
-            navigate("/booking");
+            onLoginSuccess(email);
+
+            if (data.user.role == "admin"){
+                console.log("Admin logged in", data.user);
+                navigate("/admin");
+            }
+            else{ 
+                console.log("User logged in", data.user);
+                navigate("/booking");
+            }
 
         }
         catch(err){
