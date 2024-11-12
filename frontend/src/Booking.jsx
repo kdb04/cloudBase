@@ -44,8 +44,7 @@ const Booking = ({ isLoggedIn }) => {
     }
 
     const handleBooking = async(e) => {
-        e.preventDefa
-        ult();
+        e.preventDefault();
         if(!selectedFlightId){
             return alert("Please select a flight");
         }
