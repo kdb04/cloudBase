@@ -9,11 +9,12 @@ import AdminPage from "./AdminPage";
 
 function App(){
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userEmail, setUserEmail] = useState("");
+    //const [userEmail, setUserEmail] = useState("");
+    const [userRole, setUserRole] = useState(null);
 
     const handleLogin = (email) => {
         setIsLoggedIn(true);
-        setUserEmail(email);
+        setUserRole(email == "admin@example.com" ? "admin" : "user");
     }
 
     return(
@@ -21,11 +22,12 @@ function App(){
             <div className="App">
                 <Routes>
                     <Route path="/" element={<HomePage />}/>
-                    <Route path="/Login" element={<LoginForm onLoginSuccess={() => setIsLoggedIn(true)} />}/>
-                    <Route path="/Booking" element={<Booking isLoggedIn={isLoggedIn} />}/>
-                    <Route path="/admin" element={isLoggedIn && userEmail === "admin@example.com" ? <AdminPage />: <Navigate to="/Login"/>}/>
+                    <Route path="/Login" element={<LoginForm onLoginSuccess={handleLogin} />}/>
+                    <Route path="/Booking" element={<Booking isLoggedIn={isLoggedIn}/>}/>
+        {/*<Route path="/admin" element={isLoggedIn && userEmail === "admin@example.com" ? <AdminPage />: <Navigate to="/Login"/>}/>*/}
                     <Route path="/About" element={<About />}/>
                     <Route path="/contact" element={<ContactPage />}/>
+                    <Route path="/admin" element={isLoggedIn && userRole === "admin" ? (<AdminPage />):(<Navigate to="/Login" replace />)} />
                 </Routes>
             </div>
         </Router>
