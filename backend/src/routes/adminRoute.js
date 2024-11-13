@@ -1,10 +1,7 @@
 const express = require("express");
-const { adjustDynamicPricing , monitorFlightRoutes, editFlightSchedule } = require("../controllers/adminController");
-const authAdmin = require("../authAdmin");
 const router = express.Router();
+const { handleEditSchedule } = require("../controllers/adminController");
 
-router.post("/dynamic-pricing", authAdmin, adjustDynamicPricing);
-router.get("/monitor-routes", authAdmin, monitorFlightRoutes);
-router.put("/edit-schedule", authAdmin, editFlightSchedule);
+router.put("/edit-schedule", handleEditSchedule);
 
 module.exports = router;
