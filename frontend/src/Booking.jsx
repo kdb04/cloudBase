@@ -18,6 +18,10 @@ const Booking = ({ isLoggedIn }) => {
     const [availableFlights, setAvailableFlights] = useState([]);
     const [selectedFlightId, setSelectedFlightId] = useState(null);
     const [showLoginMessage, setShowLoginMessage] = useState(false);
+    const [showRerouteModal, setShowRerouteModal] = useState(false);
+    const [cancelledFlightId, setCancelledFlightId] = useState("");
+    const [departureDate, setDepartureDate] = useState("");
+    const [alternateFlights, setAlternateFlights] = useState([]);
     const Navigate = useNavigate();
 
     useEffect(() => {
@@ -106,6 +110,32 @@ const Booking = ({ isLoggedIn }) => {
             setAvailableFlights([]);
         } catch (error) {
             console.error("Error during cancellation:", error);
+        }
+    };
+
+
+    const handleReRoute = async () => {
+        if (!source || !destination) {
+            return alert("Please provide both source and destination to reroute.");
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3000/api/bookings/alternate-flights`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ cancelled_flight_id: cancelledFlightId, departure_date: departureDate }),
+            });
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch alternate flight options");
+            }
+
+            const result = await response.json();
+            setAlternateFlights(result.alternateFlights);
+        } catch (error) {
+            console.error("Error fetching alternate flights:", error);
         }
     };
 
@@ -219,8 +249,37 @@ const Booking = ({ isLoggedIn }) => {
                         )}
                         <div className="form-actions">
                             <button type="button" className="action-button cancel" onClick={handleCancel}>Cancel</button>
+                            <button type="button" className="action-button reroute" onClick={handleReRoute}>Re-Route</button>
                             <button type="submit" className="action-button submit" onClick={handleBooking}>Book Selected Flight</button>
                         </div>
+
+                        {showRerouteModal && (
+                            <div className="reroute-modal">
+                                <div className="modal-content">
+                                    <h3>Enter Cancelled Flight ID and Departure Date</h3>
+                                    <input type="text" placeholder="Cancelled Flight ID" value={cancelledFlightId}onChange={(e) => setCancelledFlightId(e.target.value)} />
+                                    <input type="date" placeholder="Departure Date" value={departureDate} onChange={(e) => setDepartureDate(e.target.value)} />
+                                    <button onClick={handleReroute}>Find Alternate Flights</button>
+                                    <button onClick={() => setShowRerouteModal(false)}>Close</button>
+                                </div>
+                            </div>
+                        )}
+
+                        {alternateFlights.length > 0 && (
+                            <div className="flights-list">
+                                <h3>Alternative Flights</h3>
+                                {alternateFlights.map((flight) => (
+                                    <div key={flight.flight_id} className="flight-card">
+                                        <p>Flight No: {flight.flight_id}</p>
+                                        <p>Airline ID: {flight.airline_id}</p>
+                                        <p>Departure: {flight.departure}</p>
+                                        <p>Arrival: {flight.arrival}</p>
+                                        <p>Seats Available: {flight.available_seats}</p>
+                                        <p>Price: {flight.price}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             </main>
