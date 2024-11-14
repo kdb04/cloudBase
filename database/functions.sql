@@ -1,14 +1,29 @@
 -- Function1
-CREATE DEFINER=`root`@`localhost` PROCEDURE `alternative`(IN cancelled_flight_id BIGINT, IN departure_date date)
+DELIMITER $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `alternative`(IN cancelled_flight_id BIGINT)
 BEGIN
-declare cancelled_destination varchar(50);
-declare cancelled_source varchar(50);
-declare alt_price bigint;
-select source, destination, price into cancelled_source, cancelled_destination, alt_price from Flights where flight_id=cancelled_flight_id;
-select flight_id, airline_id , departure,arrival ,available_seats, price from Flights where source=cancelled_source and destination=cancelled_destination and available_seats>0 and flight_id!=cancelled_flight_id and status!='canceled' and status!="air"
-order by price asc;
-END;
-//
+   DECLARE cancelled_destination VARCHAR(50);
+   DECLARE cancelled_source VARCHAR(50);
+   DECLARE alt_price BIGINT;
+
+   SELECT source, destination, price INTO cancelled_source, cancelled_destination, alt_price
+   FROM Flights
+   WHERE flight_id = cancelled_flight_id;
+
+   SELECT flight_id, airline_id, departure, arrival, available_seats, price
+   FROM Flights
+   WHERE source = cancelled_source
+     AND destination = cancelled_destination
+     AND available_seats > 0
+     AND flight_id != cancelled_flight_id
+     AND status != 'canceled'
+     AND status != "air"
+   ORDER BY price ASC;
+
+END$$
+
+DELIMITER ;
 
 -- Function2
 CREATE DEFINER=`root`@`localhost` PROCEDURE `dynamic_pricing`(flightid bigint)

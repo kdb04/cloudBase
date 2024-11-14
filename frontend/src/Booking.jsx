@@ -34,7 +34,7 @@ const Booking = ({ isLoggedIn }) => {
 
     const handleSearch = async () => {
         try{
-            const response = await fetch (`http://localhost:3000/api/bookings/available-flights?source=${source}&destination=${destination}`);
+            const response = await fetch(`http://localhost:3000/api/bookings/available-flights?source=${source}&destination=${destination}`);
             if (!response.ok){
                 throw new Error("Failed to fetch flight data");
             }
@@ -249,7 +249,7 @@ const Booking = ({ isLoggedIn }) => {
                         )}
                         <div className="form-actions">
                             <button type="button" className="action-button cancel" onClick={handleCancel}>Cancel</button>
-                            <button type="button" className="action-button reroute" onClick={handleReRoute}>Re-Route</button>
+                            <button type="button" className="action-button reroute" onClick={() => setShowRerouteModal(true)}>Re-Route</button>
                             <button type="submit" className="action-button submit" onClick={handleBooking}>Book Selected Flight</button>
                         </div>
 
@@ -259,7 +259,7 @@ const Booking = ({ isLoggedIn }) => {
                                     <h3>Enter Cancelled Flight ID and Departure Date</h3>
                                     <input type="text" placeholder="Cancelled Flight ID" value={cancelledFlightId}onChange={(e) => setCancelledFlightId(e.target.value)} />
                                     <input type="date" placeholder="Departure Date" value={departureDate} onChange={(e) => setDepartureDate(e.target.value)} />
-                                    <button onClick={handleReroute}>Find Alternate Flights</button>
+                                    <button onClick={handleReRoute}>Find Alternate Flights</button>
                                     <button onClick={() => setShowRerouteModal(false)}>Close</button>
                                 </div>
                             </div>
