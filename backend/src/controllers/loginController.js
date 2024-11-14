@@ -8,47 +8,63 @@ const userLogin = async (req, res) => {
         return res.status(400).json({ message: "Email and password are required" });
     }
 
-    const userCheck = `SELECT * FROM users WHERE email=?`;
+    const checkBlackListQuery = "CALL GetBlacklistedUsers()";
 
-    db.query(userCheck, [email], async (error, results) => {
-        if (error) {
-            return res.status(500).json({ message: "Database error", error });
+    db.query(checkBlackListQuery, (error, blacklistedUsers) => {
+        if (error){
+            return res.status(500).json({ message: "Database error", error});
         }
 
-        console.log("Query results:", results);
+        console.log("Blacklisted users fetched successfully:", blacklistedUsers[0]);
 
-        if (results.length > 0) {
-            const user = results[0];
+        const isBlackListed = blacklistedUsers[0].some(user => user.email === email);
+        if (isBlackListed){
+            console.log(`Login attempt blocked for blacklisted email: ${email}`);
+            return res.status(403).json({ message: "This account is blacklisted. Access denied."});
+        }
 
-            /*if (user.password !== password) {
-                return res.status(401).json({ message: "Invalid password" });
-            }*/
+        const userCheck = `SELECT * FROM users WHERE email=?`;
 
-            const passwordMatch = await bcrypt.compare(password, user.password);
-            if (!passwordMatch){
-                return res.status(401).json({ message: "Invalid password "});
+        db.query(userCheck, [email], async (error, results) => {
+            if (error) {
+                return res.status(500).json({ message: "Database error", error });
             }
 
-            console.log("Login successful");
-            return res.status(200).json({ message: "Login successful", user });
-        }
-        else {
+            console.log("Query results:", results);
 
-            console.log("User not found, creating new user");
+            if (results.length > 0) {
+                const user = results[0];
 
-            const hashedPassword = await bcrypt.hash(password, 10);
+                /*if (user.password !== password) {
+                    return res.status(401).json({ message: "Invalid password" });
+                }*/
 
-            const insertQuery = `INSERT INTO users (email, password) VALUES (?, ?)`;
-
-            db.query(insertQuery, [email, hashedPassword], (insertError, insertResults) => {
-                if (insertError) {
-                    return res.status(500).json({ message: "Database error", insertError });
+                const passwordMatch = await bcrypt.compare(password, user.password);
+                if (!passwordMatch){
+                    return res.status(401).json({ message: "Invalid password "});
                 }
 
-                console.log("User created successfully");
-                return res.status(201).json({ message: "User created successfully", user: { email, password: hashedPassword } });
-            });
-        }
+                console.log("Login successful");
+                return res.status(200).json({ message: "Login successful", user });
+            }
+            else {
+
+                console.log("User not found, creating new user");
+
+                const hashedPassword = await bcrypt.hash(password, 10);
+
+                const insertQuery = `INSERT INTO users (email, password) VALUES (?, ?)`;
+
+                db.query(insertQuery, [email, hashedPassword], (insertError, insertResults) => {
+                    if (insertError) {
+                        return res.status(500).json({ message: "Database error", insertError });
+                    }
+
+                    console.log("User created successfully");
+                    return res.status(201).json({ message: "User created successfully", user: { email, password: hashedPassword } });
+                });
+            }
+        });
     });
 };
 

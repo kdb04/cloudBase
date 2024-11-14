@@ -46,3 +46,14 @@ update Flights set price=new_price where flightid=flight_id;
 END;
 //
 
+-- Function3
+DELIMITER //
+CREATE PROCEDURE GetBlacklistedUsers()
+BEGIN
+    SELECT 
+        u.name,
+        u.email,
+    FROM 
+        users u INNER JOIN blacklisted_emails b ON u.email = b.b_emails;
+END //
+DELIMITER ;
