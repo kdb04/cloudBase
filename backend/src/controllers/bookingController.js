@@ -63,4 +63,21 @@ const getAvailableFlights = (req, res) => {
     })
 }
 
-module.exports = { bookTicket, cancelTicket, getAvailableFlights };
+const getAlternateFlights = (req, res) => {
+    const { cancelled_flight_id } = req.body;
+
+    const query = "CALL alternative(?)";
+
+    db.query(query, [cancelled_flight_id], (err, results) => {
+        if (err){
+            console.error("Error fetching alternate flights:", err);
+            return res.status(500).json({ error: "Error fetching alternate flights" });
+        }
+
+        const alternateFlights = results[0];
+
+        res.status(200).json({ alternateFlights });
+    });
+};
+
+module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights };

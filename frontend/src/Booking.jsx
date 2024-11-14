@@ -115,17 +115,13 @@ const Booking = ({ isLoggedIn }) => {
 
 
     const handleReRoute = async () => {
-        if (!source || !destination) {
-            return alert("Please provide both source and destination to reroute.");
-        }
-
         try {
             const response = await fetch(`http://localhost:3000/api/bookings/alternate-flights`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ cancelled_flight_id: cancelledFlightId, departure_date: departureDate }),
+                body: JSON.stringify({ cancelled_flight_id: cancelledFlightId }),
             });
 
             if (!response.ok) {
