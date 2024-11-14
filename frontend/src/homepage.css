@@ -155,4 +155,20 @@
     object-fit: contain;
 }
 
+.weather-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
 
+.weather-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.weather-item svg {
+    font-size: 1.5rem;
+    color: #007bff; 
+}

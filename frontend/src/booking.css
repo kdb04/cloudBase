@@ -18,10 +18,10 @@ body, html {
 
 .booking-content {
     width: 100%;
-    max-width: 800px;
+    max-width: 1000px;
     background-color: rgba(0, 0, 0, 0.6);
-    border-radius: 8px;
-    padding: 2rem;
+    border-radius: 12px;
+    padding: 3rem;
     color: white;
     font-family: Arial, sans-serif;
 }
@@ -35,8 +35,8 @@ body, html {
 
 .booking-form {
     background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 2rem;
+    border-radius: 12px;
+    padding: 3rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -77,12 +77,12 @@ body, html {
     display: flex;
     align-items: center;
     background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    padding: 0.5rem;
+    border-radius: 8px;
+    padding: 1rem;
 }
 
 .input-icon {
-    margin-right: 0.5rem;
+    margin-right: 1rem;
 }
 
 .input-icon.rotated {
@@ -94,10 +94,14 @@ body, html {
     border: none;
     color: white;
     width: 100%;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    height:2.5rem;
 }
 
 .form-input input::placeholder {
     color: rgba(255, 255, 255, 0.7);
+    font-size: 1.2rem;
 }
 
 .form-actions {

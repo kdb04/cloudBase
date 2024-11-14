@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaPlane } from "react-icons/fa";
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin, FaPlane, FaCloud, FaSun, FaTint, FaWind } from "react-icons/fa";
 import "./homepage.css";
 import AirlineLogos from "./airlines.jsx";
 
@@ -34,7 +34,20 @@ const HomePage = () => {
 
                 <div className="info-card weather-updates">
                     <h2>Weather Updates:</h2>
-
+                    <div className="weather-info">
+                        <div className="weather-item">
+                            <FaSun />
+                            <span>Temp: 28°C</span>
+                        </div>
+                        <div className="weather-item">
+                            <FaTint />
+                            <span>Humidity: 60%</span>
+                        </div>
+                        <div className="weather-item">
+                            <FaWind />
+                            <span>Wind: 15km/hr</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="info-card travel-guidelines">

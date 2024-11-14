@@ -254,9 +254,13 @@ const Booking = ({ isLoggedIn }) => {
                                 <div className="modal-content">
                                     <h3>Enter Cancelled Flight ID and Departure Date</h3>
                                     <input type="text" placeholder="Cancelled Flight ID" value={cancelledFlightId}onChange={(e) => setCancelledFlightId(e.target.value)} />
-                                    <input type="date" placeholder="Departure Date" value={departureDate} onChange={(e) => setDepartureDate(e.target.value)} />
-                                    <button onClick={handleReRoute}>Find Alternate Flights</button>
-                                    <button onClick={() => setShowRerouteModal(false)}>Close</button>
+                                    {/*<input type="date" placeholder="Departure Date" value={departureDate} onChange={(e) => setDepartureDate(e.target.value)} />*/}
+                                    <div className="alt-flights">
+                                        <button onClick={handleReRoute}>Find Alternate Flights</button>
+                                    </div>
+                                    <div className="close-modal">
+                                        <button onClick={() => setShowRerouteModal(false)}>Close</button>
+                                    </div>
                                 </div>
                             </div>
                         )}
