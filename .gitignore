@@ -7,22 +7,46 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+.pnp
+.pnp.js
+
+# Build Output
 dist
 dist-ssr
+build
 *.local
-yarn-lock
-.vite
-.env
 
-# Editor directories and files
+# Configuration & Secrets
+.env
+.env.*
+!.env.example
+.vite
+
+# Testing
+coverage/
+
+# Editor & System
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
+Thumbs.db
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+.eslintcache
 
+# Security
+*.pem
+
+frontend/yarn.lock
+
+frontend/package-lock.json
+frontend/package.json
+
+backend/package-lock.json
+backend/package.json
