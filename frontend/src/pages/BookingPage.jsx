@@ -432,7 +432,7 @@ const Booking = ({ isLoggedIn }) => {
                           {/* Route Timeline */}
                           <div className="flex items-center space-x-4">
                             <div className="text-center">
-                              <div className="text-2xl font-bold">{flight.departure_time || '08:00'}</div>
+                              <div className="text-2xl font-bold">{flight.departure ? flight.departure.slice(0, 5) : '08:00'}</div>
                               <div className="text-sm text-gray-600 dark:text-gray-400 uppercase font-semibold">
                                 {flight.source}
                               </div>
@@ -441,8 +441,19 @@ const Booking = ({ isLoggedIn }) => {
                             <div className="flex-1 flex flex-col items-center">
                               <div className="text-xs text-gray-500 mb-1">
                                 <FaClock className="inline mr-1" />
-                                {flight.duration || '2h 30m'}
+                                {flight.departure && flight.arrival 
+                                  ? (() => {
+                                    const [depH, depM] = flight.departure.split(':');
+                                    const [arrH, arrM] = flight.arrival.split(':');
+                                    let diffMins = (parseInt(arrH) * 60 + parseInt(arrM)) - (parseInt(depH) * 60 + parseInt(depM));
+                                    if (diffMins < 0) diffMins += 24 * 60;
+                                    const hrs = Math.floor(diffMins / 60);
+                                    const mins = diffMins % 60;
+                                    return `${hrs}h ${mins}m`;
+                                  })()
+                                : '2h 30m'}
                               </div>
+
                               <div className="w-full h-0.5 bg-gray-300 dark:bg-gray-600 relative">
                                 <FaPlane className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary" />
                               </div>
@@ -452,7 +463,7 @@ const Booking = ({ isLoggedIn }) => {
                             </div>
 
                             <div className="text-center">
-                              <div className="text-2xl font-bold">{flight.arrival_time || '10:30'}</div>
+                              <div className="text-2xl font-bold">{flight.arrival ? flight.arrival.slice(0, 5) : '10:30'}</div>
                               <div className="text-sm text-gray-600 dark:text-gray-400 uppercase font-semibold">
                                 {flight.destination}
                               </div>

@@ -51,7 +51,7 @@ const cancelTicket = (req, res) => {
 const getAvailableFlights = (req, res) => {
     const { source, destination } = req.query;
 
-    const query = "SELECT flight_id, source, destination, available_seats, price FROM Flights WHERE source = ? AND destination = ?";
+    const query = "SELECT flight_id, airline_id, source, destination, available_seats, price, arrival, departure, date FROM Flights WHERE source = ? AND destination = ?";
 
     db.query(query, [source, destination], (err, results) => {
         if (err){

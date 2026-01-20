@@ -10,14 +10,14 @@ const HomePage = () => {
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-primary via-primary-hover to-purple-700 text-white">
         <div className="max-w-container mx-auto px-mobile md:px-tablet lg:px-desktop py-20 md:py-32">
-          <div className="max-w-3xl">
+          <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Welcome to CloudBase Airways
+              Welcome to CloudBase
             </h1>
             <p className="text-xl md:text-2xl text-gray-100 mb-8">
               Experience seamless travel with our cutting-edge flight booking and management system
             </p>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/Booking">
                 <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                   <FaPlane className="mr-2" />

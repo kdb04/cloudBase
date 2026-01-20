@@ -16,7 +16,7 @@ const Navbar = () => {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
   const [language, setLanguage] = useState('EN');
 
   const isActive = (path) => location.pathname === path;
@@ -67,6 +67,7 @@ const Navbar = () => {
               onChange={(e) => setCurrency(e.target.value)}
               className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
+              <option value="INR">INR</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
               <option value="GBP">GBP</option>

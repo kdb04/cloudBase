@@ -5,14 +5,14 @@ const airlines = [
   { name: 'IndiGo', logo: '/assets/indigo.png' },
   { name: 'AirAsia', logo: '/assets/airasia.png' },
   { name: 'SpiceJet', logo: '/assets/spicejet.png' },
-  { name: 'Vistara', logo: '/assets/vistara.png' },
+  { name: 'Vistara', logo: '/assets/vistara.jpeg' },
   { name: 'Air France', logo: '/assets/airfrance.png' },
   { name: 'British Airways', logo: '/assets/britishairways.png' },
   { name: 'Emirates', logo: '/assets/emirates.png' },
   { name: 'Etihad Airways', logo: '/assets/etihad.png' },
   { name: 'KLM', logo: '/assets/klm.png' },
-  { name: 'Lufthansa', logo: '/assets/lufthansa.png' },
-  { name: 'Qatar Airways', logo: '/assets/qatar.png' },
+  { name: 'Lufthansa', logo: '/assets/lufthansa.jpg' },
+  { name: 'Qatar Airways', logo: '/assets/qatarairways.png' },
 ];
 
 const AirlineLogos = () => {
