@@ -7,7 +7,7 @@ const bookTicket = (req, res) => {
 
     db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id], (err, results) => {
         if (err){
-            console.error(err);
+            //console.error(err);
             return res.status(500).json({ message: "Error booking flight", error: err});
         }
 
@@ -17,7 +17,7 @@ const bookTicket = (req, res) => {
             }
         });
 
-        console.log(`Ticket booked for flight ${flight_id}`);
+        //console.log(`Ticket booked for flight ${flight_id}`);
         return res.status(201).json({ message: "Flight booked successfully", ticket_id : results.insertId });
     });
 };
@@ -28,22 +28,20 @@ const cancelTicket = (req, res) => {
 
     db.query(deleteQuery, [ticket_id], (err, results) => {
         if (err){
-            console.error(err);
+            //console.error(err);
             return res.status(500).json({ message: "Error cancelling flight", error: err});
         }
         if (results.affectedRows === 0){
-            console.log(`Ticket with ID ${ticket_id} not found`);
+            //console.log(`Ticket with ID ${ticket_id} not found`);
             return res.status(404).json({ message: "Ticket not found" });
         }
 
         const getFlightQuery = "SELECT flight_id FROM ticket WHERE ticket_id=?";
         db.query(getFlightQuery, [ticket_id], (flightErr, flightResult) => {
-            if(!flightErr && flightResult.length>0){
-                db.query("CALL dynamic_pricing(?)", [flightResult[0].flight_id]);
-            }
+            if(!flightErr && flightResult.length>0) db.query("CALL dynamic_pricing(?)", [flightResult[0].flight_id]);
         });
 
-        console.log(`Ticket with ID ${ticket_id} cancelled`);
+        //console.log(`Ticket with ID ${ticket_id} cancelled`);
         return res.status(200).json({ message: "Flight booking cancelled successfully"});
     });
 };
@@ -55,10 +53,10 @@ const getAvailableFlights = (req, res) => {
 
     db.query(query, [source, destination], (err, results) => {
         if (err){
-            console.error(err);
+            //console.error(err);
             return res.status(500).json({ message: "Error fetching flight data", error: err });
         }
-        console.log(`Available flights from ${source} to ${destination} fetched`);
+        //console.log(`Available flights from ${source} to ${destination} fetched`);
         return res.status(200).json({ Flights: results });
     })
 }
@@ -70,7 +68,7 @@ const getAlternateFlights = (req, res) => {
 
     db.query(query, [cancelled_flight_id], (err, results) => {
         if (err){
-            console.error("Error fetching alternate flights:", err);
+            //console.error("Error fetching alternate flights:", err);
             return res.status(500).json({ error: "Error fetching alternate flights" });
         }
 

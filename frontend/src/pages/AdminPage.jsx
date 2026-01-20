@@ -249,7 +249,7 @@ function AdminPage() {
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">Price:</span>
-                        <p className="font-semibold text-primary">${flight.price}</p>
+                        <p className="font-semibold text-primary">₹{flight.price}</p>
                       </div>
                     </div>
                   </Card>

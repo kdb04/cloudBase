@@ -4,7 +4,7 @@ import { useTheme } from './ThemeContext';
 import { 
   FaSun, 
   FaMoon, 
-  FaPlane, 
+  FaPlaneDeparture, 
   FaUser, 
   FaBars, 
   FaTimes,
@@ -35,7 +35,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="bg-primary text-white p-2 rounded-lg group-hover:bg-primary-hover transition-colors">
-              <FaPlane className="w-5 h-5" />
+              <FaPlaneDeparture className="w-5 h-5" />
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">
               CloudBase

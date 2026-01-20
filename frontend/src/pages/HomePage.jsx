@@ -1,14 +1,50 @@
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { FaPlane, FaSun, FaTint, FaWind, FaShieldAlt, FaHeartbeat, FaBook } from 'react-icons/fa';
+import { FaPlane, FaTint, FaWind } from 'react-icons/fa';
+import { MdSecurity, MdWbSunny, MdMenuBook, MdHealthAndSafety } from 'react-icons/md';
 import { Layout } from '../components/layout';
 import { Card, Button, Badge } from '../components/ui';
 import AirlineLogos from '../components/home/AirlineLogos';
 
 const HomePage = () => {
+  const cardsRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('pop-in-visible');
+            entry.target.classList.remove('pop-in-hidden');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+      }
+    );
+
+    const cards = cardsRef.current?.children;
+    if (cards) {
+      Array.from(cards).forEach((card, index) => {
+        card.classList.add('pop-in-hidden');
+        card.style.transitionDelay = `${index * 100}ms`; // Stagger effect
+        observer.observe(card);
+      });
+    }
+
+    return () => {
+      if (cards) {
+        Array.from(cards).forEach((card) => observer.unobserve(card));
+      }
+    };
+  }, []);
+
   return (
     <Layout>
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-primary via-primary-hover to-purple-700 text-white">
+      {/* Hero Section - Background Changed */}
+      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
         <div className="max-w-container mx-auto px-mobile md:px-tablet lg:px-desktop py-20 md:py-32">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
@@ -36,12 +72,12 @@ const HomePage = () => {
 
       {/* Info Cards Section */}
       <div className="max-w-container mx-auto px-mobile md:px-tablet lg:px-desktop py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+        <div ref={cardsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {/* Security Alerts */}
           <Card hover className="group">
             <div className="flex items-start space-x-4">
               <div className="p-3 bg-success/10 rounded-lg group-hover:bg-success/20 transition-colors">
-                <FaShieldAlt className="w-6 h-6 text-success" />
+                <MdSecurity className="w-6 h-6 text-success" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Security Status</h3>
@@ -57,14 +93,14 @@ const HomePage = () => {
           <Card hover className="group">
             <div className="flex items-start space-x-4">
               <div className="p-3 bg-info/10 rounded-lg group-hover:bg-info/20 transition-colors">
-                <FaSun className="w-6 h-6 text-warning" />
+                <MdWbSunny className="w-6 h-6 text-warning" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-3">Weather Updates</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="flex items-center text-gray-600 dark:text-gray-400">
-                      <FaSun className="mr-2 w-4 h-4" /> Temperature
+                      <MdWbSunny className="mr-2 w-4 h-4" /> Temperature
                     </span>
                     <span className="font-medium">28°C</span>
                   </div>
@@ -89,7 +125,7 @@ const HomePage = () => {
           <Card hover className="group">
             <div className="flex items-start space-x-4">
               <div className="p-3 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                <FaBook className="w-6 h-6 text-primary" />
+                <MdMenuBook className="w-6 h-6 text-primary" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Travel Guidelines</h3>
@@ -118,7 +154,7 @@ const HomePage = () => {
           <Card hover className="group">
             <div className="flex items-start space-x-4">
               <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-lg group-hover:bg-red-200 dark:group-hover:bg-red-900/30 transition-colors">
-                <FaHeartbeat className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <MdHealthAndSafety className="w-6 h-6 text-red-600 dark:text-red-400" />
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-lg mb-2">Health Guidelines</h3>

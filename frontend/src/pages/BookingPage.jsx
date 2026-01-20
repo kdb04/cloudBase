@@ -200,7 +200,7 @@ const Booking = ({ isLoggedIn }) => {
             </div>
 
             {/* Search Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-4">
               {/* From Location */}
               <div className="relative">
                 <Input
@@ -216,7 +216,7 @@ const Booking = ({ isLoggedIn }) => {
               <div className="relative">
                 <button
                   onClick={handleSwapLocations}
-                  className="absolute -left-4 top-8 z-10 p-2 bg-white dark:bg-gray-800 rounded-full border-2 border-primary hover:bg-primary hover:text-white transition-colors hidden md:block"
+                  className="absolute -left-3 md:-left-8 top-6 mt-1 z-10 p-2 bg-white dark:bg-gray-800 rounded-full border-2 border-primary hover:bg-primary hover:text-white transition-colors hidden md:flex items-center justify-center"
                   aria-label="Swap locations"
                 >
                   <FaExchangeAlt className="w-4 h-4" />
@@ -480,7 +480,7 @@ const Booking = ({ isLoggedIn }) => {
                           <div className="text-right mb-4">
                             <div className="text-xs text-gray-500 mb-1">From</div>
                             <div className="text-3xl font-bold text-primary">
-                              ${flight.price || '299'}
+                               ₹{flight.price}
                             </div>
                             <div className="text-xs text-gray-500">per person</div>
                           </div>
@@ -585,7 +585,7 @@ const Booking = ({ isLoggedIn }) => {
                             <span className="font-medium">Seats:</span> {flight.available_seats}
                           </div>
                           <div>
-                            <span className="font-medium">Price:</span> ${flight.price}
+                            <span className="font-medium">Price:</span> ₹{flight.price}
                           </div>
                         </div>
                       </Card>

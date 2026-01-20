@@ -17,9 +17,9 @@ app.use("/api/bookings", bookingRoute);
 app.use("/api/login", loginRoute);
 app.use("/api/admin", adminRoute);
 
-/*app.get("/api/test", (req, res) => {
+app.get("/api/test", (req, res) => {
     res.json({ message: "Backend-Frontend connected successfully"});
-})*/
+})
 
 const PORT = process.env.PORT || 3000;
 

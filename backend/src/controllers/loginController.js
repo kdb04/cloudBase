@@ -4,33 +4,27 @@ const db = require("../connection/db.js");
 const userLogin = async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ message: "Email and password are required" });
-    }
-
+    if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
+    
     const checkBlackListQuery = "CALL GetBlacklistedUsers()";
 
     db.query(checkBlackListQuery, (error, blacklistedUsers) => {
-        if (error){
-            return res.status(500).json({ message: "Database error", error});
-        }
+        if (error) return res.status(500).json({ message: "Database error", error});
 
-        console.log("Blacklisted users fetched successfully:", blacklistedUsers[0]);
+        //console.log("Blacklisted users fetched successfully:", blacklistedUsers[0]);
 
         const isBlackListed = blacklistedUsers[0].some(user => user.email === email);
         if (isBlackListed){
-            console.log(`Login attempt blocked for blacklisted email: ${email}`);
+            //console.log(`Login attempt blocked for blacklisted email: ${email}`);
             return res.status(403).json({ message: "This account is blacklisted. Access denied."});
         }
 
         const userCheck = `SELECT * FROM users WHERE email=?`;
 
         db.query(userCheck, [email], async (error, results) => {
-            if (error) {
-                return res.status(500).json({ message: "Database error", error });
-            }
+            if (error) return res.status(500).json({ message: "Database error", error });
 
-            console.log("Query results:", results);
+            //console.log("Query results:", results);
 
             if (results.length > 0) {
                 const user = results[0];
@@ -40,27 +34,23 @@ const userLogin = async (req, res) => {
                 }*/
 
                 const passwordMatch = await bcrypt.compare(password, user.password);
-                if (!passwordMatch){
-                    return res.status(401).json({ message: "Invalid password "});
-                }
+                if (!passwordMatch) return res.status(401).json({ message: "Invalid password "});
 
-                console.log("Login successful");
+                //console.log("Login successful");
                 return res.status(200).json({ message: "Login successful", user });
             }
             else {
 
-                console.log("User not found, creating new user");
+                //console.log("User not found, creating new user");
 
                 const hashedPassword = await bcrypt.hash(password, 10);
 
                 const insertQuery = `INSERT INTO users (email, password) VALUES (?, ?)`;
 
                 db.query(insertQuery, [email, hashedPassword], (insertError, insertResults) => {
-                    if (insertError) {
-                        return res.status(500).json({ message: "Database error", insertError });
-                    }
+                    if (insertError) return res.status(500).json({ message: "Database error", insertError });
 
-                    console.log("User created successfully");
+                    //console.log("User created successfully");
                     return res.status(201).json({ message: "User created successfully", user: { email, password: hashedPassword } });
                 });
             }

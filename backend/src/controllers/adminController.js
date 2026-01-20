@@ -35,7 +35,7 @@ const handleEditSchedule = async (req, res) => {
 
         db.query(insertQuery, [newFlight.flight_id, newFlight.airline_id, newFlight.status, newFlight.source, newFlight.destination, newFlight.arrival, newFlight.departure, newFlight.available_seats, newFlight.price, newFlight.date, newFlight.runway_no], (err, results) => {
             if (err) {
-                console.error('Error inserting flight:', err);
+                //console.error('Error inserting flight:', err);
                 return res.status(500).send({ message: 'Error inserting flight', error: err });
             }
 
@@ -43,7 +43,7 @@ const handleEditSchedule = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error checking runway conflict:', error);
+        //console.error('Error checking runway conflict:', error);
         res.status(500).send({ message: 'Error checking runway conflict', error });
     }
 };
