@@ -1,11 +1,12 @@
 const db = require("../connection/db.js");
 
 const bookTicket = (req, res) => {
-    const { passenger_no, class: travelClass, food_preference,  source, destination, seat_no, flight_id } = req.body;
+    const { passenger_no, class: travelClass, food_preference,  source, destination, seat_no, flight_id, transaction_id } = req.body;
     //const query = `DESC Ticket`;
-    const query = "INSERT INTO ticket (passenger_no, class, food_preference, source, destination, seat_no, flight_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    const status = transaction_id ? 'Paid' : 'Pending';
+    const query = "INSERT INTO ticket (passenger_no, class, food_preference, source, destination, seat_no, flight_id, transaction_id, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id], (err, results) => {
+    db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id, transaction_id, status], (err, results) => {
         if (err){
             //console.error(err);
             return res.status(500).json({ message: "Error booking flight", error: err});

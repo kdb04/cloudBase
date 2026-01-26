@@ -73,6 +73,7 @@ function LoginForm({ onLoginSuccess }) {
 
       setSuccess(data.message);
       setError(null);
+      localStorage.setItem('token', data.token);
       onLoginSuccess(email);
 
       if (data.user.role == 'admin') {
@@ -97,7 +98,6 @@ function LoginForm({ onLoginSuccess }) {
     <Layout>
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-gradient-to-br from-primary/10 via-purple-500/5 to-transparent py-12 px-mobile md:px-tablet lg:px-desktop">
         <Card className="w-full max-w-md" padding="lg">
-          {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
               <FaPlane className="w-8 h-8 text-white" />
@@ -108,7 +108,6 @@ function LoginForm({ onLoginSuccess }) {
             </p>
           </div>
 
-          {/* Error/Success Messages */}
           {error && (
             <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
               <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
@@ -120,7 +119,6 @@ function LoginForm({ onLoginSuccess }) {
             </div>
           )}
 
-          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input
               label="Email Address"
@@ -164,25 +162,12 @@ function LoginForm({ onLoginSuccess }) {
             </Button>
           </form>
 
-          {/* Footer */}
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
               <a href="#" className="text-primary hover:text-primary-hover font-medium">
                 Sign up
               </a>
-            </p>
-          </div>
-
-          {/* Demo Credentials */}
-          <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-dark-border">
-            <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Demo Credentials:
-            </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              Admin: admin@example.com
-              <br />
-              Password must be 8+ chars with letters, digits & special chars
             </p>
           </div>
         </Card>

@@ -12,15 +12,18 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { Card, Button, Input, Badge } from '../components/ui';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { PaymentModal } from '../components/ui/PaymentModal';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 const Booking = ({ isLoggedIn }) => {
-  // Trip settings
   const [tripType, setTripType] = useState('roundtrip');
   const [travelClass, setTravelClass] = useState('economy');
   const [passengerNo, setPassengerNo] = useState(1);
   const [directOnly, setDirectOnly] = useState(false);
   
-  // Form data
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
   const [departureDate, setDepartureDate] = useState('');
@@ -28,23 +31,24 @@ const Booking = ({ isLoggedIn }) => {
   const [foodPreference, setFoodPreference] = useState('');
   const [seatNo, setSeatNo] = useState('');
   
-  // Flight results
   const [availableFlights, setAvailableFlights] = useState([]);
   const [selectedFlightId, setSelectedFlightId] = useState(null);
   const [ticketId, setTicketId] = useState(null);
   const [sortBy, setSortBy] = useState('recommended');
   
-  // Filter states
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [stops, setStops] = useState({ direct: false, oneStop: false, twoPlus: false });
   
-  // Modal states
   const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [showRerouteModal, setShowRerouteModal] = useState(false);
   const [cancelledFlightId, setCancelledFlightId] = useState('');
   const [alternateFlights, setAlternateFlights] = useState([]);
-  
+
+  const [clientSecret, setClientSecret] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState(0);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -72,11 +76,45 @@ const Booking = ({ isLoggedIn }) => {
     }
   };
 
-  const handleBooking = async (e) => {
-    e.preventDefault();
+  const handleBookingInitiate = async () => {
     if (!selectedFlightId) {
       return alert('Please select a flight');
     }
+
+    try {
+      const token = localStorage.getItem('token'); 
+      if (!token) {
+         return alert("You must be logged in to book.");
+      }
+
+      const response = await fetch('http://localhost:3000/api/payment/create-intent', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+            flight_id: selectedFlightId, 
+            passenger_count: passengerNo 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || 'Payment initialization failed');
+
+      setClientSecret(data.clientSecret);
+      setPaymentAmount(data.amount);
+      setShowPaymentModal(true);
+      
+    } catch (error) {
+      console.error('Error initiating booking:', error);
+      alert('Failed to initiate booking. Please try again.');
+    }
+  };
+
+  const handlePaymentSuccess = async (paymentIntentId) => {
+    setShowPaymentModal(false);
 
     const bookingData = {
       passenger_no: passengerNo,
@@ -87,12 +125,17 @@ const Booking = ({ isLoggedIn }) => {
       destination,
       seat_no: seatNo,
       flight_id: selectedFlightId,
+      transaction_id: paymentIntentId
     };
 
     try {
+      const token = localStorage.getItem('token'); 
       const response = await fetch('http://localhost:3000/api/bookings', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(bookingData),
       });
 
@@ -104,7 +147,7 @@ const Booking = ({ isLoggedIn }) => {
       alert('Booking successful! Ticket ID: ' + result.ticket_id);
     } catch (error) {
       console.error('Error during booking:', error);
-      alert('Booking failed. Please try again.');
+      alert('Payment succeeded but booking failed. Please contact support.');
     }
   };
 
@@ -112,8 +155,12 @@ const Booking = ({ isLoggedIn }) => {
     if (!ticketId) return;
 
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:3000/api/bookings/${ticketId}`, {
         method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
       });
 
       if (!response.ok) throw new Error('Failed to cancel booking');
@@ -165,7 +212,6 @@ const Booking = ({ isLoggedIn }) => {
     <Layout>
       <div className="bg-gradient-to-b from-primary/5 to-transparent">
         <div className="max-w-container mx-auto px-mobile md:px-tablet lg:px-desktop py-8">
-          {/* Login Overlay */}
           {showLoginMessage && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
               <Card className="max-w-md mx-4 text-center" padding="lg">
@@ -180,9 +226,8 @@ const Booking = ({ isLoggedIn }) => {
             </div>
           )}
 
-          {/* Search Module */}
           <Card className={`mb-8 ${!isLoggedIn ? 'blur-sm pointer-events-none' : ''}`}>
-            {/* Trip Type Tabs */}
+
             <div className="flex space-x-2 mb-6 border-b border-gray-200 dark:border-dark-border">
               {['roundtrip', 'oneway', 'multicity'].map((type) => (
                 <button
@@ -199,9 +244,7 @@ const Booking = ({ isLoggedIn }) => {
               ))}
             </div>
 
-            {/* Search Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-4">
-              {/* From Location */}
               <div className="relative">
                 <Input
                   label="Flying From"
@@ -212,7 +255,6 @@ const Booking = ({ isLoggedIn }) => {
                 />
               </div>
 
-              {/* Swap Button & To Location */}
               <div className="relative">
                 <button
                   onClick={handleSwapLocations}
@@ -230,7 +272,6 @@ const Booking = ({ isLoggedIn }) => {
                 />
               </div>
 
-              {/* Departure Date */}
               <div>
                 <Input
                   label="Departure"
@@ -241,7 +282,6 @@ const Booking = ({ isLoggedIn }) => {
                 />
               </div>
 
-              {/* Return Date */}
               {tripType === 'roundtrip' && (
                 <div>
                   <Input
@@ -255,7 +295,6 @@ const Booking = ({ isLoggedIn }) => {
               )}
             </div>
 
-            {/* Additional Options */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
               <div>
                 <Input
@@ -298,7 +337,6 @@ const Booking = ({ isLoggedIn }) => {
               </div>
             </div>
 
-            {/* Search Button */}
             <div className="flex justify-end">
               <Button onClick={handleSearch} size="lg">
                 <FaPlane className="mr-2" />
@@ -307,13 +345,10 @@ const Booking = ({ isLoggedIn }) => {
             </div>
           </Card>
 
-          {/* Results Section */}
           {availableFlights.length > 0 && (
             <div className={!isLoggedIn ? 'blur-sm pointer-events-none' : ''}>
-              {/* Results Header */}
               <div className="mb-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                  {/* Filters Toggle (Mobile) */}
                   <Button
                     variant="outline"
                     onClick={() => setShowFilters(!showFilters)}
@@ -323,7 +358,6 @@ const Booking = ({ isLoggedIn }) => {
                     Filters
                   </Button>
 
-                  {/* Sort Tabs */}
                   <div className="flex space-x-2 flex-wrap">
                     {['recommended', 'cheapest', 'fastest'].map((sort) => (
                       <button
@@ -346,9 +380,7 @@ const Booking = ({ isLoggedIn }) => {
                 </div>
               </div>
 
-              {/* Results Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                {/* Filters Sidebar */}
                 <div className={`lg:col-span-1 ${showFilters ? 'block' : 'hidden lg:block'}`}>
                   <Card padding="md" className="sticky top-20">
                     <div className="flex justify-between items-center mb-4">
@@ -361,7 +393,6 @@ const Booking = ({ isLoggedIn }) => {
                       </button>
                     </div>
 
-                    {/* Stops Filter */}
                     <div className="mb-6">
                       <h4 className="font-medium mb-3">Stops</h4>
                       <div className="space-y-2">
@@ -397,7 +428,6 @@ const Booking = ({ isLoggedIn }) => {
                   </Card>
                 </div>
 
-                {/* Flight Results */}
                 <div className="lg:col-span-3 space-y-4">
                   {getSortedFlights().map((flight) => (
                     <Card
@@ -409,7 +439,6 @@ const Booking = ({ isLoggedIn }) => {
                       onClick={() => setSelectedFlightId(flight.flight_id)}
                     >
                       <div className="flex flex-col md:flex-row justify-between gap-4">
-                        {/* Flight Info */}
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-4">
                             <div>
@@ -429,7 +458,6 @@ const Booking = ({ isLoggedIn }) => {
                             )}
                           </div>
 
-                          {/* Route Timeline */}
                           <div className="flex items-center space-x-4">
                             <div className="text-center">
                               <div className="text-2xl font-bold">{flight.departure ? flight.departure.slice(0, 5) : '08:00'}</div>
@@ -502,7 +530,6 @@ const Booking = ({ isLoggedIn }) => {
                 </div>
               </div>
 
-              {/* Booking Actions */}
               {selectedFlightId && (
                 <Card className="mt-8" padding="md">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -528,7 +555,7 @@ const Booking = ({ isLoggedIn }) => {
                     <Button variant="outline" onClick={() => setShowRerouteModal(true)}>
                       Find Alternate Routes
                     </Button>
-                    <Button onClick={handleBooking} size="lg">
+                    <Button onClick={handleBookingInitiate} size="lg">
                       Book Selected Flight
                     </Button>
                   </div>
@@ -537,7 +564,16 @@ const Booking = ({ isLoggedIn }) => {
             </div>
           )}
 
-          {/* Reroute Modal */}
+          {showPaymentModal && clientSecret && (
+            <Elements stripe={stripePromise} options={{ clientSecret }}>
+              <PaymentModal 
+                amount={paymentAmount}
+                onClose={() => setShowPaymentModal(false)}
+                onSuccess={handlePaymentSuccess}
+              />
+            </Elements>
+          )}
+
           {showRerouteModal && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
               <Card className="max-w-2xl w-full max-h-[80vh] overflow-y-auto" padding="lg">

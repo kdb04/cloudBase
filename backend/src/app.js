@@ -6,6 +6,7 @@ const db = require("./connection/db.js");
 const bookingRoute = require("./routes/bookingRoute");
 const loginRoute = require("./routes/loginRoute");
 const adminRoute = require("./routes/adminRoute");
+const paymentRoute = require("./routes/paymentRoute");
 
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api/bookings", bookingRoute);
 app.use("/api/login", loginRoute);
 app.use("/api/admin", adminRoute);
+app.use("/api/payment", paymentRoute);
 
 app.get("/api/test", (req, res) => {
     res.json({ message: "Backend-Frontend connected successfully"});

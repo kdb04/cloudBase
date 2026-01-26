@@ -126,6 +126,12 @@ VALUES
     ('freelancerproai@moredollar.info')
     ;
 
+ALTER TABLE ticket ADD COLUMN transaction_id VARCHAR(255);
+
+ALTER TABLE ticket ADD COLUMN payment_status VARCHAR(50) DEFAULT 'Pending';
+
+ALTER TABLE ticket ADD COLUMN amount_paid DECIMAL(10, 2);
+
 --triggers : 
 
 DELIMITER //
