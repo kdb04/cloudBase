@@ -2,10 +2,14 @@ const express = require("express");
 const { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights } = require("../controllers/bookingController");
 const router = express.Router();
 const db = require("../connection/db");
+const authenticateToken = require("../middleware/authMiddleware");
 
-router.post("/", bookTicket);
-router.delete("/:ticket_id", cancelTicket);
+//public routes
 router.get("/available-flights", getAvailableFlights);
 router.post("/alternate-flights", getAlternateFlights);
+
+//protected routes
+router.post("/", authenticateToken, bookTicket);
+router.delete("/:ticket_id", authenticateToken, cancelTicket);
 
 module.exports = router;

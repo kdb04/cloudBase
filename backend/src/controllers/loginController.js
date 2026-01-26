@@ -1,4 +1,5 @@
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const db = require("../connection/db.js");
 
 const userLogin = async (req, res) => {
@@ -36,8 +37,18 @@ const userLogin = async (req, res) => {
                 const passwordMatch = await bcrypt.compare(password, user.password);
                 if (!passwordMatch) return res.status(401).json({ message: "Invalid password "});
 
+                const token = jwt.sign(
+                    { id: user.id, email: user.email },
+                    process.env.JWT_SECRET,
+                    { expiresIn: '1h' }
+                );
+
                 //console.log("Login successful");
-                return res.status(200).json({ message: "Login successful", user });
+                return res.status(200).json({ 
+                    message: "Login successful",
+                    token,
+                    user: { id: user.id, email: user.email }
+                });
             }
             else {
 
@@ -50,8 +61,18 @@ const userLogin = async (req, res) => {
                 db.query(insertQuery, [email, hashedPassword], (insertError, insertResults) => {
                     if (insertError) return res.status(500).json({ message: "Database error", insertError });
 
+                    const token = jwt.sign(
+                        { id: insertResults.insertId, email },
+                        process.env.JWT_SECRET,
+                        { expiresIn: '1h' }
+                    );
+
                     //console.log("User created successfully");
-                    return res.status(201).json({ message: "User created successfully", user: { email, password: hashedPassword } });
+                    return res.status(201).json({ 
+                        message: "User created successfully",
+                        token,
+                        user: { email }
+                    });
                 });
             }
         });
