@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { FaChartLine, FaRoute, FaEdit, FaPlane, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 import { Layout } from '../components/layout';
-import { Card, Button, Input, Badge } from '../components/ui';
+import { Card, Button, Input } from '../components/ui';
+import { ENDPOINTS } from '../utils/api';
+import { formatPrice } from '../utils/formatters';
 
 function AdminPage() {
   const [flightId, setFlightId] = useState('');
@@ -16,7 +18,7 @@ function AdminPage() {
 
   const handleDynamicPricing = async () => {
     try {
-      const response = await fetch('/api/admin/dynamic-pricing', {
+      const response = await fetch(ENDPOINTS.DYNAMIC_PRICING, {
         method: 'POST',
       });
       const data = await response.json();
@@ -31,7 +33,7 @@ function AdminPage() {
 
   const handleMonitorRoutes = async () => {
     try {
-      const response = await fetch('/api/admin/monitor-routes');
+      const response = await fetch(ENDPOINTS.MONITOR_ROUTES);
       const data = await response.json();
       setResponseMessage(data.message || 'Routes monitored successfully');
       setMessageType('success');
@@ -44,7 +46,7 @@ function AdminPage() {
 
   const handleEditSchedule = async () => {
     try {
-      const response = await fetch('/api/admin/edit-schedule', {
+      const response = await fetch(ENDPOINTS.EDIT_SCHEDULE, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -249,7 +251,7 @@ function AdminPage() {
                       </div>
                       <div>
                         <span className="text-gray-600 dark:text-gray-400">Price:</span>
-                        <p className="font-semibold text-primary">₹{flight.price}</p>
+                        <p className="font-semibold text-primary">{formatPrice(flight.price)}</p>
                       </div>
                     </div>
                   </Card>

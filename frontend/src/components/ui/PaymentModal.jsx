@@ -1,6 +1,7 @@
 import { PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 import Button from './Button';
+import { formatPrice } from '../../utils/formatters';
 
 export const PaymentModal = ({ onClose, onSuccess, amount }) => {
     const stripe = useStripe();
@@ -18,7 +19,7 @@ export const PaymentModal = ({ onClose, onSuccess, amount }) => {
         const { error, paymentIntent } = await stripe.confirmPayment({
             elements,
             confirmParams: {
-                return_url: window.location.origin + "/booking-success", 
+                return_url: window.location.origin + "/booking-success",
             },
             redirect: "if_required",
         });
@@ -38,11 +39,11 @@ export const PaymentModal = ({ onClose, onSuccess, amount }) => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6">
                 <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">Complete Payment</h2>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">Total to pay: ₹{amount}</p>
-                
+                <p className="text-gray-600 dark:text-gray-400 mb-6">Total to pay: {formatPrice(amount)}</p>
+
                 <form onSubmit={handleSubmit}>
                     <PaymentElement />
-                    
+
                     {message && (
                         <div className="mt-4 p-3 bg-red-100 text-red-700 rounded text-sm">
                             {message}
@@ -54,7 +55,7 @@ export const PaymentModal = ({ onClose, onSuccess, amount }) => {
                             Cancel
                         </Button>
                         <Button type="submit" disabled={isLoading || !stripe || !elements}>
-                            {isLoading ? "Processing..." : `Pay ₹${amount}`}
+                            {isLoading ? "Processing..." : `Pay ${formatPrice(amount)}`}
                         </Button>
                     </div>
                 </form>

@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaPlane } from 'react-icons/fa';
 import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
+import { getApiUrl, ENDPOINTS } from '../utils/api';
+import { setAuthToken, isAdminUser } from '../utils/auth';
+import { validateEmail, validatePassword } from '../utils/validators';
 
 function LoginForm({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
@@ -34,22 +37,14 @@ function LoginForm({ onLoginSuccess }) {
       return;
     }
 
-    if (password.length < 8) {
-      setError('Password length must be 8 characters');
-      return;
-    }
-
-    const hasAlphabet = /[a-zA-Z]/.test(password);
-    const hasDigit = /\d/.test(password);
-    const hasSpecialCharacter = /[!@#$%^&*()_+{}\[\]:;<>,.?]/g.test(password);
-
-    if (!hasAlphabet || !hasDigit || !hasSpecialCharacter) {
-      setError('Invalid password');
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      setError(passwordValidation.error);
       return;
     }
 
     try {
-      if (email === 'admin@example.com') {
+      if (isAdminUser(email)) {
         onLoginSuccess(email);
         setSuccess('Admin Login Successful');
         setError(null);
@@ -57,7 +52,7 @@ function LoginForm({ onLoginSuccess }) {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/login', {
+      const response = await fetch(getApiUrl(ENDPOINTS.LOGIN), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +68,7 @@ function LoginForm({ onLoginSuccess }) {
 
       setSuccess(data.message);
       setError(null);
-      localStorage.setItem('token', data.token);
+      setAuthToken(data.token);
       onLoginSuccess(email);
 
       if (data.user.role == 'admin') {
@@ -87,11 +82,6 @@ function LoginForm({ onLoginSuccess }) {
       setError(err.message);
       setSuccess(null);
     }
-  };
-
-  const validateEmail = (email) => {
-    const valid = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-    return valid.test(email);
   };
 
   return (

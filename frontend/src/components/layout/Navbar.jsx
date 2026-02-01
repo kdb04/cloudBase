@@ -1,16 +1,15 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState } from 'react';
 import { useTheme } from './ThemeContext';
-import { 
-  FaSun, 
-  FaMoon, 
-  FaPlaneDeparture, 
-  FaUser, 
-  FaBars, 
-  FaTimes,
-  FaGlobe,
-  FaDollarSign
+import {
+  FaSun,
+  FaMoon,
+  FaPlaneDeparture,
+  FaUser,
+  FaBars,
+  FaTimes
 } from 'react-icons/fa';
+import { CURRENCIES } from '../../utils/constants';
 
 const Navbar = () => {
   const location = useLocation();
@@ -32,7 +31,6 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 bg-white dark:bg-dark-surface border-b border-gray-200 dark:border-dark-border shadow-sm">
       <div className="max-w-container mx-auto px-mobile md:px-tablet lg:px-desktop">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="bg-primary text-white p-2 rounded-lg group-hover:bg-primary-hover transition-colors">
               <FaPlaneDeparture className="w-5 h-5" />
@@ -42,7 +40,6 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
             {navLinks.map((link) => (
               <Link
@@ -59,21 +56,19 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Right Actions */}
           <div className="hidden lg:flex items-center space-x-3">
-            {/* Currency Selector */}
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
               className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-dark-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="INR">INR</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
+              {CURRENCIES.map((curr) => (
+                <option key={curr.value} value={curr.value}>
+                  {curr.label}
+                </option>
+              ))}
             </select>
 
-            {/* Language Selector */}
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
@@ -84,7 +79,6 @@ const Navbar = () => {
               <option value="FR">FR</option>
             </select>
 
-            {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
@@ -97,7 +91,6 @@ const Navbar = () => {
               )}
             </button>
 
-            {/* User Account */}
             <Link
               to="/Login"
               className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
@@ -107,7 +100,6 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -120,7 +112,6 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMobileMenuOpen && (
           <div className="lg:hidden py-4 border-t border-gray-200 dark:border-dark-border">
             <div className="flex flex-col space-y-2">
@@ -138,7 +129,7 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              
+
               <div className="pt-4 border-t border-gray-200 dark:border-dark-border space-y-2">
                 <Link
                   to="/Login"
@@ -148,7 +139,7 @@ const Navbar = () => {
                   <FaUser className="w-4 h-4" />
                   <span className="text-sm font-medium">Account</span>
                 </Link>
-                
+
                 <button
                   onClick={toggleTheme}
                   className="w-full flex items-center justify-between px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"

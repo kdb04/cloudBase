@@ -9,6 +9,7 @@ import {
   ContactPage,
   AdminPage
 } from './pages';
+import { getUserRole } from './utils/auth';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -16,7 +17,7 @@ function App() {
 
   const handleLogin = (email) => {
     setIsLoggedIn(true);
-    setUserRole(email == 'admin@example.com' ? 'admin' : 'user');
+    setUserRole(getUserRole(email));
   };
 
   return (

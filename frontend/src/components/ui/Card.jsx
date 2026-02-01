@@ -1,13 +1,13 @@
-const Card = ({ 
-  children, 
+const Card = ({
+  children,
   className = '',
   hover = false,
   padding = 'md',
-  ...props 
+  ...props
 }) => {
-  const baseStyles = 'bg-white dark:bg-dark-surface rounded-lg shadow-soft border border-gray-200 dark:border-dark-border transition-all';
-  
-  const hoverStyles = hover ? 'hover:shadow-elevated hover:-translate-y-0.5' : '';
+  const baseStyles = 'bg-white dark:bg-dark-surface rounded-lg shadow-soft border border-gray-200 dark:border-dark-border transition-all duration-200 ease-out';
+
+  const hoverStyles = hover ? 'hover:shadow-elevated hover:-translate-y-0.5 hover:border-primary/30' : '';
   
   const paddings = {
     none: '',
