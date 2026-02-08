@@ -3,11 +3,15 @@ const db = require("../connection/db.js");
 
 const createPaymentIntent = async (req, res) => {
     const { flight_id, passenger_count } = req.body;
+    console.log(`[PAYMENT] Creating payment intent - Flight: ${flight_id}, Passengers: ${passenger_count}`);
 
     const query = "SELECT price FROM flights WHERE flight_id = ?";
     
     db.query(query, [flight_id], async (err, results) => {
-        if (err || results.length === 0) return res.status(500).json({ message: "Flight not found" });
+        if (err || results.length === 0) {
+            console.log(`[PAYMENT] FAILED - Flight ${flight_id} not found`);
+            return res.status(500).json({ message: "Flight not found" });
+        }
 
         const pricePerSeat = results[0].price;
         const totalAmount = pricePerSeat * passenger_count * 100; 
@@ -22,9 +26,10 @@ const createPaymentIntent = async (req, res) => {
                 metadata: { flight_id: flight_id.toString() }
             });
 
+            console.log(`[PAYMENT] SUCCESS - Payment intent created for ₹${totalAmount / 100}`);
             res.status(200).json({
                 clientSecret: paymentIntent.client_secret,
-                amount: totalAmount / 100 
+                amount: totalAmount / 100
             });
         } catch (error) {
             console.error("Stripe Error:", error);

@@ -10,6 +10,8 @@ export const ENDPOINTS = {
   CREATE_INTENT: '/payment/create-intent',
   // Auth
   LOGIN: '/login',
+  SIGNUP: '/login/signup',
+  LOGOUT: '/login/logout',
   // Admin
   DYNAMIC_PRICING: '/admin/dynamic-pricing',
   MONITOR_ROUTES: '/admin/monitor-routes',

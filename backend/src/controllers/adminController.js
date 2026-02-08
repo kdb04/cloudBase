@@ -28,17 +28,20 @@ const handleEditSchedule = async (req, res) => {
         const conflictCount = await checkRunwayConflict(newFlight);
 
         if (conflictCount > 0) {
+            console.log(`[ADMIN] CONFLICT - Runway ${newFlight.runway_no} has a scheduling conflict`);
             return res.status(400).send({ message: 'Schedule conflict: Another flight is assigned to the same runway within 30 minutes.' });
         }
 
+        console.log(`[ADMIN] Creating flight: ${newFlight.flight_id}, Route: ${newFlight.source} -> ${newFlight.destination}`);
         const insertQuery = `INSERT INTO Flights (flight_id, airline_id, status, source, destination, arrival, departure, available_seats, price, date, runway_no) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         db.query(insertQuery, [newFlight.flight_id, newFlight.airline_id, newFlight.status, newFlight.source, newFlight.destination, newFlight.arrival, newFlight.departure, newFlight.available_seats, newFlight.price, newFlight.date, newFlight.runway_no], (err, results) => {
             if (err) {
-                //console.error('Error inserting flight:', err);
+                console.log(`[ADMIN] FAILED - Error inserting flight ${newFlight.flight_id}: ${err.message}`);
                 return res.status(500).send({ message: 'Error inserting flight', error: err });
             }
 
+            console.log(`[ADMIN] SUCCESS - Flight ${newFlight.flight_id} inserted`);
             res.status(200).send({ message: 'Flight inserted successfully' });
         });
 

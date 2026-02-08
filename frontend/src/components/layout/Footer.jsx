@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
           {/* About Section */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">CloudBase</h3>
+            <h3 className="text-lg font-semibold mb-4 -ml-24">CloudBase</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
               Your trusted partner for flight bookings worldwide. We connect you to destinations across the globe.
             </p>

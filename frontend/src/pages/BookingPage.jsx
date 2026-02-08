@@ -50,7 +50,6 @@ const Booking = ({ isLoggedIn }) => {
   const [priceRange] = useState([0, 10000]);
   const [stops, setStops] = useState({ direct: false, oneStop: false, twoPlus: false });
 
-  const [showLoginMessage, setShowLoginMessage] = useState(false);
   const [showRerouteModal, setShowRerouteModal] = useState(false);
   const [cancelledFlightId, setCancelledFlightId] = useState('');
   const [alternateFlights, setAlternateFlights] = useState([]);
@@ -64,8 +63,10 @@ const Booking = ({ isLoggedIn }) => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setShowLoginMessage(!isLoggedIn);
-  }, [isLoggedIn]);
+    if (!isLoggedIn) {
+      navigate('/Login');
+    }
+  }, [isLoggedIn, navigate]);
 
   const handleSwapLocations = () => {
     const temp = source;
@@ -211,26 +212,12 @@ const Booking = ({ isLoggedIn }) => {
     <Layout>
       <div className="bg-gradient-to-b from-primary/5 to-transparent">
         <div className="max-w-container mx-auto px-mobile md:px-tablet lg:px-desktop py-8">
-          {showLoginMessage && (
-            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-              <Card className="max-w-md mx-4 text-center" padding="lg">
-                <h2 className="text-2xl font-bold mb-4">Login Required</h2>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Please log in to access flight booking
-                </p>
-                <Button onClick={() => navigate('/Login')} size="lg" fullWidth>
-                  Login Now
-                </Button>
-              </Card>
-            </div>
-          )}
-
           <motion.div
             initial="hidden"
             animate="visible"
             variants={fadeInUp}
           >
-            <Card className={`mb-8 ${!isLoggedIn ? 'blur-sm pointer-events-none' : ''}`}>
+            <Card className="mb-8">
 
               <div className="flex space-x-2 mb-6 border-b border-gray-200 dark:border-dark-border">
                 {TRIP_TYPES.map((type) => (
@@ -370,7 +357,7 @@ const Booking = ({ isLoggedIn }) => {
           )}
 
           {availableFlights.length > 0 && (
-            <div className={!isLoggedIn ? 'blur-sm pointer-events-none' : ''}>
+            <div>
               <div className="mb-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                   <Button

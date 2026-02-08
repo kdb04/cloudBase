@@ -4,6 +4,7 @@ import { ThemeProvider } from './components/layout';
 import {
   HomePage,
   LoginPage,
+  SignUpPage,
   BookingPage,
   AboutPage,
   ContactPage,
@@ -27,6 +28,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/Login" element={<LoginPage onLoginSuccess={handleLogin} />} />
+            <Route path="/SignUp" element={<SignUpPage onLoginSuccess={handleLogin} />} />
             <Route path="/Booking" element={<BookingPage isLoggedIn={isLoggedIn} />} />
             <Route path="/About" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />

@@ -1,27 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaPlane } from 'react-icons/fa';
+import { FaEnvelope, FaLock, FaPlane, FaUserPlus } from 'react-icons/fa';
 import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
-import { setAuthToken, isAdminUser } from '../utils/auth';
+import { setAuthToken } from '../utils/auth';
 import { validateEmail, validatePassword } from '../utils/validators';
 
-function LoginForm({ onLoginSuccess }) {
+function SignUpPage({ onLoginSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const savedEmail = localStorage.getItem('rememberedEmail');
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
-  }, []);
 
   const handleInput = (event) => {
     const { name, value } = event.target;
@@ -32,6 +24,9 @@ function LoginForm({ onLoginSuccess }) {
         break;
       case 'password':
         setPassword(value);
+        break;
+      case 'confirmPassword':
+        setConfirmPassword(value);
         break;
       default:
         break;
@@ -52,16 +47,13 @@ function LoginForm({ onLoginSuccess }) {
       return;
     }
 
-    try {
-      if (isAdminUser(email)) {
-        onLoginSuccess(email);
-        setSuccess('Admin Login Successful');
-        setError(null);
-        navigate('/admin');
-        return;
-      }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
 
-      const response = await fetch(getApiUrl(ENDPOINTS.LOGIN), {
+    try {
+      const response = await fetch(getApiUrl(ENDPOINTS.SIGNUP), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,22 +70,8 @@ function LoginForm({ onLoginSuccess }) {
       setSuccess(data.message);
       setError(null);
       setAuthToken(data.token);
-
-      if (rememberMe) {
-        localStorage.setItem('rememberedEmail', email);
-      } else {
-        localStorage.removeItem('rememberedEmail');
-      }
-
       onLoginSuccess(email);
-
-      if (data.user.role == 'admin') {
-        console.log('Admin logged in', data.user);
-        navigate('/admin');
-      } else {
-        console.log('User logged in', data.user);
-        navigate('/booking');
-      }
+      navigate('/booking');
     } catch (err) {
       setError(err.message);
       setSuccess(null);
@@ -106,11 +84,11 @@ function LoginForm({ onLoginSuccess }) {
         <Card className="w-full max-w-md" padding="lg">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
-              <FaPlane className="w-8 h-8 text-white" />
+              <FaUserPlus className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
+            <h2 className="text-3xl font-bold mb-2">Create Account</h2>
             <p className="text-gray-600 dark:text-gray-400">
-              Sign in to access your account
+              Sign up to start booking flights
             </p>
           </div>
 
@@ -144,37 +122,34 @@ function LoginForm({ onLoginSuccess }) {
               id="password"
               name="password"
               icon={FaLock}
-              placeholder="Enter your password"
+              placeholder="Create a password"
               value={password}
               onChange={handleInput}
               required
             />
 
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                />
-                <span className="text-gray-600 dark:text-gray-400">Remember me</span>
-              </label>
-              <a href="#" className="text-primary hover:text-primary-hover font-medium">
-                Forgot password?
-              </a>
-            </div>
+            <Input
+              label="Confirm Password"
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              icon={FaLock}
+              placeholder="Confirm your password"
+              value={confirmPassword}
+              onChange={handleInput}
+              required
+            />
 
             <Button type="submit" fullWidth size="lg">
-              Sign In
+              Sign Up
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Don't have an account?{' '}
-              <Link to="/SignUp" className="text-primary hover:text-primary-hover font-medium">
-                Sign up
+              Already have an account?{' '}
+              <Link to="/Login" className="text-primary hover:text-primary-hover font-medium">
+                Sign in
               </Link>
             </p>
           </div>
@@ -184,4 +159,4 @@ function LoginForm({ onLoginSuccess }) {
   );
 }
 
-export default LoginForm;
+export default SignUpPage;

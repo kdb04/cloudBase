@@ -25,7 +25,7 @@ const About = () => {
             animate="visible"
             variants={fadeInUp}
           >
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">About CloudBase Airways</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">About CloudBase</h1>
             <p className="text-xl text-gray-600 dark:text-gray-400">
               Your premier gateway to the world, connecting people and places with excellence
             </p>

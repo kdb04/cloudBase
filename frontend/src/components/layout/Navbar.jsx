@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useTheme } from './ThemeContext';
 import {
@@ -6,19 +6,43 @@ import {
   FaMoon,
   FaPlaneDeparture,
   FaUser,
+  FaSignOutAlt,
   FaBars,
   FaTimes
 } from 'react-icons/fa';
 import { CURRENCIES } from '../../utils/constants';
+import { hasAuthToken, removeAuthToken, getAuthToken } from '../../utils/auth';
+import { getApiUrl, ENDPOINTS } from '../../utils/api';
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [currency, setCurrency] = useState('INR');
   const [language, setLanguage] = useState('EN');
+  const isLoggedIn = hasAuthToken();
 
   const isActive = (path) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    const token = getAuthToken();
+    if (token) {
+      try {
+        await fetch(getApiUrl(ENDPOINTS.LOGOUT), {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
+    }
+    removeAuthToken();
+    navigate('/Login');
+    window.location.reload();
+  };
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -91,13 +115,23 @@ const Navbar = () => {
               )}
             </button>
 
-            <Link
-              to="/Login"
-              className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              <FaUser className="w-4 h-4" />
-              <span className="text-sm font-medium">Account</span>
-            </Link>
+            {isLoggedIn ? (
+              <button
+                onClick={handleSignOut}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+              >
+                <FaSignOutAlt className="w-4 h-4" />
+                <span className="text-sm font-medium">Sign Out</span>
+              </button>
+            ) : (
+              <Link
+                to="/Login"
+                className="flex items-center space-x-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+              >
+                <FaUser className="w-4 h-4" />
+                <span className="text-sm font-medium">Sign In</span>
+              </Link>
+            )}
           </div>
 
           <button
@@ -131,14 +165,27 @@ const Navbar = () => {
               ))}
 
               <div className="pt-4 border-t border-gray-200 dark:border-dark-border space-y-2">
-                <Link
-                  to="/Login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-md"
-                >
-                  <FaUser className="w-4 h-4" />
-                  <span className="text-sm font-medium">Account</span>
-                </Link>
+                {isLoggedIn ? (
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleSignOut();
+                    }}
+                    className="w-full flex items-center space-x-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md"
+                  >
+                    <FaSignOutAlt className="w-4 h-4" />
+                    <span className="text-sm font-medium">Sign Out</span>
+                  </button>
+                ) : (
+                  <Link
+                    to="/Login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md"
+                  >
+                    <FaUser className="w-4 h-4" />
+                    <span className="text-sm font-medium">Sign In</span>
+                  </Link>
+                )}
 
                 <button
                   onClick={toggleTheme}
