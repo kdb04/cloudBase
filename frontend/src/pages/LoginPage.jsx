@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaPlane } from 'react-icons/fa';
+import { Mail, Lock, Plane } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
@@ -106,7 +106,7 @@ function LoginForm({ onLoginSuccess }) {
         <Card className="w-full max-w-md" padding="lg">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
-              <FaPlane className="w-8 h-8 text-white" />
+              <Plane className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-3xl font-bold mb-2">Welcome Back</h2>
             <p className="text-gray-600 dark:text-gray-400">
@@ -131,7 +131,7 @@ function LoginForm({ onLoginSuccess }) {
               type="email"
               id="email"
               name="email"
-              icon={FaEnvelope}
+              icon={Mail}
               placeholder="you@example.com"
               value={email}
               onChange={handleInput}
@@ -143,7 +143,7 @@ function LoginForm({ onLoginSuccess }) {
               type="password"
               id="password"
               name="password"
-              icon={FaLock}
+              icon={Lock}
               placeholder="Enter your password"
               value={password}
               onChange={handleInput}
@@ -160,9 +160,9 @@ function LoginForm({ onLoginSuccess }) {
                 />
                 <span className="text-gray-600 dark:text-gray-400">Remember me</span>
               </label>
-              <a href="#" className="text-primary hover:text-primary-hover font-medium">
+              <Link to="/ForgotPassword" className="text-primary hover:text-primary-hover font-medium">
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             <Button type="submit" fullWidth size="lg">

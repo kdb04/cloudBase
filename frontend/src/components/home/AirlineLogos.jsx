@@ -1,4 +1,4 @@
-import { FaPlane } from 'react-icons/fa';
+import { Plane } from 'lucide-react';
 
 const airlines = [
   { name: 'Air India', logo: '/assets/airindia.png' },
@@ -20,7 +20,7 @@ const AirlineLogos = () => {
     <div className="bg-primary/5 dark:bg-primary/10 rounded-lg p-6 md:p-8">
       <h2 className="text-2xl font-bold mb-6 text-center flex items-center justify-center">
         Our Partner Airlines
-        <FaPlane className="ml-2 text-primary" />
+        <Plane className="ml-2 text-primary" />
       </h2>
       <div className="max-h-96 overflow-y-auto">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">

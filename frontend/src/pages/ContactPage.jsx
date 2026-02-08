@@ -1,11 +1,91 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Clock, MessageSquare } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
 import { fadeInUp, staggerContainer } from '../utils/animations';
 import { CONTACT_SUBJECTS } from '../utils/constants';
+import { getApiUrl, ENDPOINTS } from '../utils/api';
+import { hasAuthToken } from '../utils/auth';
 
 const ContactPage = () => {
+  const navigate = useNavigate();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const clearForm = () => {
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPhone('');
+    setSubject('');
+    setMessage('');
+    setAgreePrivacy(false);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!hasAuthToken()) {
+      navigate('/Login');
+      return;
+    }
+
+    if (!agreePrivacy) {
+      setError('Please agree to the privacy policy and terms of service');
+      return;
+    }
+
+    if (!firstName || !lastName || !email || !subject || !message) {
+      setError('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(getApiUrl(ENDPOINTS.CONTACT_SEND), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          phone,
+          subject,
+          message
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message);
+      }
+
+      setSuccess(data.message);
+      clearForm();
+      setSuccess(data.message); // Re-set success after clearForm
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -122,18 +202,33 @@ const ContactPage = () => {
                 </div>
               </div>
 
-              <form className="space-y-5">
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                </div>
+              )}
+              {success && (
+                <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <Input
                     label="First Name"
                     type="text"
                     placeholder="John"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     required
                   />
                   <Input
                     label="Last Name"
                     type="text"
                     placeholder="Doe"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     required
                   />
                 </div>
@@ -143,6 +238,8 @@ const ContactPage = () => {
                   type="email"
                   icon={Mail}
                   placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
 
@@ -151,6 +248,8 @@ const ContactPage = () => {
                   type="tel"
                   icon={Phone}
                   placeholder="+91 1234567890"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                 />
 
                 <div>
@@ -159,12 +258,14 @@ const ContactPage = () => {
                   </label>
                   <select
                     className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
                     required
                   >
                     <option value="">Select a subject</option>
-                    {CONTACT_SUBJECTS.map((subject) => (
-                      <option key={subject.value} value={subject.value}>
-                        {subject.label}
+                    {CONTACT_SUBJECTS.map((subj) => (
+                      <option key={subj.value} value={subj.value}>
+                        {subj.label}
                       </option>
                     ))}
                   </select>
@@ -178,6 +279,8 @@ const ContactPage = () => {
                     rows="6"
                     className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary focus:border-primary px-3 py-2"
                     placeholder="Tell us how we can help you..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
                     required
                   ></textarea>
                 </div>
@@ -187,7 +290,8 @@ const ContactPage = () => {
                     type="checkbox"
                     id="privacy"
                     className="w-4 h-4 mt-1 text-primary border-gray-300 rounded focus:ring-primary"
-                    required
+                    checked={agreePrivacy}
+                    onChange={(e) => setAgreePrivacy(e.target.checked)}
                   />
                   <label htmlFor="privacy" className="text-sm text-gray-600 dark:text-gray-400">
                     I agree to the privacy policy and terms of service
@@ -195,10 +299,10 @@ const ContactPage = () => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Button type="submit" size="lg" className="flex-1">
-                    Send Message
+                  <Button type="submit" size="lg" className="flex-1" disabled={loading}>
+                    {loading ? 'Sending...' : 'Send Message'}
                   </Button>
-                  <Button type="button" variant="outline" size="lg" className="flex-1">
+                  <Button type="button" variant="outline" size="lg" className="flex-1" onClick={clearForm}>
                     Clear Form
                   </Button>
                 </div>

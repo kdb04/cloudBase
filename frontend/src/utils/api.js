@@ -12,6 +12,12 @@ export const ENDPOINTS = {
   LOGIN: '/login',
   SIGNUP: '/login/signup',
   LOGOUT: '/login/logout',
+  // Forgot Password
+  SEND_OTP: '/forgot-password/send-otp',
+  VERIFY_OTP: '/forgot-password/verify-otp',
+  RESET_PASSWORD: '/forgot-password/reset-password',
+  // Contact
+  CONTACT_SEND: '/contact/send',
   // Admin
   DYNAMIC_PRICING: '/admin/dynamic-pricing',
   MONITOR_ROUTES: '/admin/monitor-routes',

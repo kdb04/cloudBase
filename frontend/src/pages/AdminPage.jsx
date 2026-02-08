@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FaChartLine, FaRoute, FaEdit, FaPlane, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+import { TrendingUp, Route, Pencil, Plane, Clock, MapPin } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
 import { ENDPOINTS } from '../utils/api';
@@ -94,7 +94,7 @@ function AdminPage() {
             <Card hover padding="lg" className="cursor-pointer" onClick={handleDynamicPricing}>
               <div className="flex items-start space-x-4">
                 <div className="p-3 bg-primary/10 rounded-lg">
-                  <FaChartLine className="w-8 h-8 text-primary" />
+                  <TrendingUp className="w-8 h-8 text-primary" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold mb-2">Dynamic Pricing</h3>
@@ -111,7 +111,7 @@ function AdminPage() {
             <Card hover padding="lg" className="cursor-pointer" onClick={handleMonitorRoutes}>
               <div className="flex items-start space-x-4">
                 <div className="p-3 bg-success/10 rounded-lg">
-                  <FaRoute className="w-8 h-8 text-success" />
+                  <Route className="w-8 h-8 text-success" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold mb-2">Monitor Routes</h3>
@@ -151,7 +151,7 @@ function AdminPage() {
           <Card padding="lg" className="mb-8">
             <div className="flex items-start space-x-4 mb-6">
               <div className="p-3 bg-warning/10 rounded-lg">
-                <FaEdit className="w-8 h-8 text-warning" />
+                <Pencil className="w-8 h-8 text-warning" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold mb-2">Edit Flight Schedule</h2>
@@ -164,7 +164,7 @@ function AdminPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <Input
                 label="Flight ID"
-                icon={FaPlane}
+                icon={Plane}
                 type="text"
                 placeholder="e.g., FL001"
                 value={flightId}
@@ -181,7 +181,7 @@ function AdminPage() {
 
               <Input
                 label="New Source"
-                icon={FaMapMarkerAlt}
+                icon={MapPin}
                 type="text"
                 placeholder="e.g., DEL"
                 value={newSource}
@@ -190,7 +190,7 @@ function AdminPage() {
 
               <Input
                 label="New Destination"
-                icon={FaMapMarkerAlt}
+                icon={MapPin}
                 type="text"
                 placeholder="e.g., BOM"
                 value={newDestination}
@@ -199,7 +199,7 @@ function AdminPage() {
 
               <Input
                 label="New Time"
-                icon={FaClock}
+                icon={Clock}
                 type="time"
                 value={newTime}
                 onChange={(e) => setNewTime(e.target.value)}
@@ -215,7 +215,7 @@ function AdminPage() {
 
             <div className="mt-6">
               <Button onClick={handleEditSchedule} size="lg">
-                <FaEdit className="mr-2" />
+                <Pencil className="mr-2" />
                 Update Flight Schedule
               </Button>
             </div>

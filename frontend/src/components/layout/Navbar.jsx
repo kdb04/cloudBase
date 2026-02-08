@@ -2,14 +2,14 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useTheme } from './ThemeContext';
 import {
-  FaSun,
-  FaMoon,
-  FaPlaneDeparture,
-  FaUser,
-  FaSignOutAlt,
-  FaBars,
-  FaTimes
-} from 'react-icons/fa';
+  Sun,
+  Moon,
+  PlaneTakeoff,
+  User,
+  LogOut,
+  Menu,
+  X
+} from 'lucide-react';
 import { CURRENCIES } from '../../utils/constants';
 import { hasAuthToken, removeAuthToken, getAuthToken } from '../../utils/auth';
 import { getApiUrl, ENDPOINTS } from '../../utils/api';
@@ -57,7 +57,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="bg-primary text-white p-2 rounded-lg group-hover:bg-primary-hover transition-colors">
-              <FaPlaneDeparture className="w-5 h-5" />
+              <PlaneTakeoff className="w-5 h-5" />
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">
               CloudBase
@@ -109,9 +109,9 @@ const Navbar = () => {
               aria-label="Toggle theme"
             >
               {theme === 'light' ? (
-                <FaMoon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Moon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               ) : (
-                <FaSun className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                <Sun className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               )}
             </button>
 
@@ -120,7 +120,7 @@ const Navbar = () => {
                 onClick={handleSignOut}
                 className="flex items-center space-x-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
               >
-                <FaSignOutAlt className="w-4 h-4" />
+                <LogOut className="w-4 h-4" />
                 <span className="text-sm font-medium">Sign Out</span>
               </button>
             ) : (
@@ -128,7 +128,7 @@ const Navbar = () => {
                 to="/Login"
                 className="flex items-center space-x-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
               >
-                <FaUser className="w-4 h-4" />
+                <User className="w-4 h-4" />
                 <span className="text-sm font-medium">Sign In</span>
               </Link>
             )}
@@ -139,9 +139,9 @@ const Navbar = () => {
             className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
           >
             {isMobileMenuOpen ? (
-              <FaTimes className="w-6 h-6" />
+              <X className="w-6 h-6" />
             ) : (
-              <FaBars className="w-6 h-6" />
+              <Menu className="w-6 h-6" />
             )}
           </button>
         </div>
@@ -173,7 +173,7 @@ const Navbar = () => {
                     }}
                     className="w-full flex items-center space-x-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md"
                   >
-                    <FaSignOutAlt className="w-4 h-4" />
+                    <LogOut className="w-4 h-4" />
                     <span className="text-sm font-medium">Sign Out</span>
                   </button>
                 ) : (
@@ -182,7 +182,7 @@ const Navbar = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md"
                   >
-                    <FaUser className="w-4 h-4" />
+                    <User className="w-4 h-4" />
                     <span className="text-sm font-medium">Sign In</span>
                   </Link>
                 )}
@@ -192,7 +192,7 @@ const Navbar = () => {
                   className="w-full flex items-center justify-between px-4 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
                 >
                   <span className="text-sm font-medium">Theme</span>
-                  {theme === 'light' ? <FaMoon className="w-4 h-4" /> : <FaSun className="w-4 h-4" />}
+                  {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
                 </button>
               </div>
             </div>

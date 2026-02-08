@@ -1,4 +1,4 @@
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
+import { Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -50,7 +50,7 @@ const Footer = () => {
                 className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary hover:text-white dark:hover:text-blue-200 active:bg-primary active:text-white transition-colors"
                 aria-label="Facebook"
               >
-                <FaFacebook className="w-5 h-5" />
+                <Facebook className="w-5 h-5" />
               </a>
               <a
                 href="https://www.x.com"
@@ -59,7 +59,7 @@ const Footer = () => {
                 className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary hover:text-white dark:hover:text-blue-200 active:bg-primary active:text-white transition-colors"
                 aria-label="Twitter"
               >
-                <FaTwitter className="w-5 h-5" />
+                <Twitter className="w-5 h-5" />
               </a>
               <a
                 href="https://www.instagram.com"
@@ -68,7 +68,7 @@ const Footer = () => {
                 className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary hover:text-white dark:hover:text-blue-200 active:bg-primary active:text-white transition-colors"
                 aria-label="Instagram"
               >
-                <FaInstagram className="w-5 h-5" />
+                <Instagram className="w-5 h-5" />
               </a>
               <a
                 href="https://www.linkedin.com"
@@ -77,7 +77,7 @@ const Footer = () => {
                 className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary hover:text-white dark:hover:text-blue-200 active:bg-primary active:text-white transition-colors"
                 aria-label="LinkedIn"
               >
-                <FaLinkedin className="w-5 h-5" />
+                <Linkedin className="w-5 h-5" />
               </a>
               </div>
             </div>

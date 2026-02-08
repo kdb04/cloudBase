@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaPlane, FaUserPlus } from 'react-icons/fa';
+import { Mail, Lock, Plane, UserPlus } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
@@ -84,7 +84,7 @@ function SignUpPage({ onLoginSuccess }) {
         <Card className="w-full max-w-md" padding="lg">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
-              <FaUserPlus className="w-8 h-8 text-white" />
+              <UserPlus className="w-8 h-8 text-white" />
             </div>
             <h2 className="text-3xl font-bold mb-2">Create Account</h2>
             <p className="text-gray-600 dark:text-gray-400">
@@ -109,7 +109,7 @@ function SignUpPage({ onLoginSuccess }) {
               type="email"
               id="email"
               name="email"
-              icon={FaEnvelope}
+              icon={Mail}
               placeholder="you@example.com"
               value={email}
               onChange={handleInput}
@@ -121,7 +121,7 @@ function SignUpPage({ onLoginSuccess }) {
               type="password"
               id="password"
               name="password"
-              icon={FaLock}
+              icon={Lock}
               placeholder="Create a password"
               value={password}
               onChange={handleInput}
@@ -133,7 +133,7 @@ function SignUpPage({ onLoginSuccess }) {
               type="password"
               id="confirmPassword"
               name="confirmPassword"
-              icon={FaLock}
+              icon={Lock}
               placeholder="Confirm your password"
               value={confirmPassword}
               onChange={handleInput}
