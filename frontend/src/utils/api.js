@@ -21,7 +21,10 @@ export const ENDPOINTS = {
   // Admin
   DYNAMIC_PRICING: '/admin/dynamic-pricing',
   MONITOR_ROUTES: '/admin/monitor-routes',
-  EDIT_SCHEDULE: '/admin/edit-schedule'
+  EDIT_SCHEDULE: '/admin/edit-schedule',
+  ADMIN_FLIGHTS: '/admin/flights',
+  ADMIN_UPDATE_FLIGHT: (flightId) => `/admin/flights/${flightId}`,
+  ADMIN_DELETE_FLIGHT: (flightId) => `/admin/flights/${flightId}`
 };
 
 export const getApiUrl = (endpoint) => `${API_BASE_URL}${endpoint}`;

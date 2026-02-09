@@ -1,79 +1,179 @@
-import { useState } from 'react';
-import { TrendingUp, Route, Pencil, Plane, Clock, MapPin } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp, Route, Pencil, Plane, Clock, MapPin, Plus, Trash2, X, DollarSign, Users, Hash } from 'lucide-react';
 import { Layout } from '../components/layout';
-import { Card, Button, Input } from '../components/ui';
-import { ENDPOINTS } from '../utils/api';
+import { Card, Button, Input, Badge } from '../components/ui';
+import { getApiUrl, ENDPOINTS } from '../utils/api';
+import { getAuthHeaders } from '../utils/auth';
 import { formatPrice } from '../utils/formatters';
 
+const EMPTY_FORM = {
+  flight_id: '',
+  airline_id: '',
+  status: 'scheduled',
+  source: '',
+  destination: '',
+  departure: '',
+  arrival: '',
+  available_seats: '',
+  price: '',
+  date: '',
+  runway_no: '',
+};
+
 function AdminPage() {
-  const [flightId, setFlightId] = useState('');
-  const [newSource, setNewSource] = useState('');
-  const [newDestination, setNewDestination] = useState('');
-  const [newTime, setNewTime] = useState('');
-  const [departureDate, setDepartureDate] = useState('');
-  const [runwayNo, setRunwayNo] = useState('');
+  const [flights, setFlights] = useState([]);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [editingFlightId, setEditingFlightId] = useState(null);
   const [responseMessage, setResponseMessage] = useState('');
-  const [alternativeFlights, setAlternativeFlights] = useState([]);
   const [messageType, setMessageType] = useState('success');
+  const [loading, setLoading] = useState(false);
+
+  const showMessage = (message, type = 'success') => {
+    setResponseMessage(message);
+    setMessageType(type);
+  };
+
+  const fetchFlights = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(getApiUrl(ENDPOINTS.ADMIN_FLIGHTS), {
+        headers: getAuthHeaders(),
+      });
+      if (!response.ok) throw new Error('Failed to fetch flights');
+      const data = await response.json();
+      setFlights(data.flights || []);
+    } catch (err) {
+      console.error('Error fetching flights:', err);
+      showMessage('Error fetching flights', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchFlights();
+  }, []);
+
+  const updateField = (field, value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setEditingFlightId(null);
+  };
+
+  const handleEditClick = (flight) => {
+    setEditingFlightId(flight.flight_id);
+    setForm({
+      flight_id: flight.flight_id,
+      airline_id: flight.airline_id || '',
+      status: flight.status || 'scheduled',
+      source: flight.source || '',
+      destination: flight.destination || '',
+      departure: flight.departure ? flight.departure.slice(0, 5) : '',
+      arrival: flight.arrival ? flight.arrival.slice(0, 5) : '',
+      available_seats: flight.available_seats ?? '',
+      price: flight.price ?? '',
+      date: flight.date ? new Date(flight.date).toISOString().split('T')[0] : '',
+      runway_no: flight.runway_no ?? '',
+    });
+    window.scrollTo({ top: document.getElementById('flight-form')?.offsetTop - 20, behavior: 'smooth' });
+  };
+
+  const handleCreate = async () => {
+    try {
+      const response = await fetch(getApiUrl(ENDPOINTS.EDIT_SCHEDULE), {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(form),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to create flight');
+      showMessage(data.message || 'Flight created successfully');
+      resetForm();
+      fetchFlights();
+    } catch (err) {
+      showMessage(err.message, 'error');
+    }
+  };
+
+  const handleUpdate = async () => {
+    try {
+      const { flight_id, ...updates } = form;
+      const response = await fetch(getApiUrl(ENDPOINTS.ADMIN_UPDATE_FLIGHT(editingFlightId)), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(updates),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to update flight');
+      showMessage(data.message || 'Flight updated successfully');
+      resetForm();
+      fetchFlights();
+    } catch (err) {
+      showMessage(err.message, 'error');
+    }
+  };
+
+  const handleDelete = async (flightId) => {
+    if (!window.confirm(`Delete flight ${flightId}? This cannot be undone.`)) return;
+    try {
+      const response = await fetch(getApiUrl(ENDPOINTS.ADMIN_DELETE_FLIGHT(flightId)), {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Failed to delete flight');
+      showMessage(data.message || 'Flight deleted successfully');
+      if (editingFlightId === flightId) resetForm();
+      fetchFlights();
+    } catch (err) {
+      showMessage(err.message, 'error');
+    }
+  };
+
+  const handleSubmit = () => {
+    if (editingFlightId) {
+      handleUpdate();
+    } else {
+      handleCreate();
+    }
+  };
 
   const handleDynamicPricing = async () => {
     try {
-      const response = await fetch(ENDPOINTS.DYNAMIC_PRICING, {
+      const response = await fetch(getApiUrl(ENDPOINTS.DYNAMIC_PRICING), {
         method: 'POST',
+        headers: getAuthHeaders(),
       });
       const data = await response.json();
-      setResponseMessage(data.message || 'Dynamic price updated');
-      setMessageType('success');
+      if (!response.ok) throw new Error(data.message || 'Failed to update pricing');
+      showMessage(data.message || 'Dynamic price updated');
     } catch (err) {
-      setResponseMessage('Error updating dynamic pricing');
-      setMessageType('error');
-      console.error('Dynamic pricing error:', err);
+      showMessage(err.message || 'Error updating dynamic pricing', 'error');
     }
   };
 
   const handleMonitorRoutes = async () => {
     try {
-      const response = await fetch(ENDPOINTS.MONITOR_ROUTES);
+      const response = await fetch(getApiUrl(ENDPOINTS.MONITOR_ROUTES), {
+        headers: getAuthHeaders(),
+      });
       const data = await response.json();
-      setResponseMessage(data.message || 'Routes monitored successfully');
-      setMessageType('success');
+      if (!response.ok) throw new Error(data.message || 'Failed to monitor routes');
+      showMessage(data.message || 'Routes monitored successfully');
     } catch (err) {
-      setResponseMessage('Error monitoring routes');
-      setMessageType('error');
-      console.error('Monitor routes error:', err);
+      showMessage(err.message || 'Error monitoring routes', 'error');
     }
   };
 
-  const handleEditSchedule = async () => {
-    try {
-      const response = await fetch(ENDPOINTS.EDIT_SCHEDULE, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          flight_id: flightId,
-          new_source: newSource,
-          new_destination: newDestination,
-          new_time: newTime,
-          departure_time: departureDate,
-          runway_no: runwayNo,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update schedule');
-      }
-
-      const text = await response.text();
-      const data = text ? JSON.parse(text) : {};
-      setResponseMessage(data.message || 'Schedule updated successfully');
-      setMessageType('success');
-      setAlternativeFlights(data.alternatives || []);
-    } catch (err) {
-      setResponseMessage('Error updating flight schedule');
-      setMessageType('error');
-      console.error('Edit schedule error', err);
+  const statusColor = (status) => {
+    switch (status) {
+      case 'scheduled': return 'info';
+      case 'air': return 'success';
+      case 'canceled': return 'danger';
+      default: return 'default';
     }
   };
 
@@ -129,7 +229,7 @@ function AdminPage() {
           {/* Response Message */}
           {responseMessage && (
             <div
-              className={`mb-8 p-4 rounded-lg border ${
+              className={`mb-8 p-4 rounded-lg border flex justify-between items-center ${
                 messageType === 'success'
                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
                   : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
@@ -144,121 +244,212 @@ function AdminPage() {
               >
                 {responseMessage}
               </p>
+              <button onClick={() => setResponseMessage('')} className="p-1 hover:opacity-70">
+                <X className="w-4 h-4" />
+              </button>
             </div>
           )}
 
-          {/* Edit Schedule Form */}
-          <Card padding="lg" className="mb-8">
-            <div className="flex items-start space-x-4 mb-6">
-              <div className="p-3 bg-warning/10 rounded-lg">
-                <Pencil className="w-8 h-8 text-warning" />
+          {/* Flight Form */}
+          <Card padding="lg" className="mb-8" id="flight-form">
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start space-x-4">
+                <div className="p-3 bg-warning/10 rounded-lg">
+                  {editingFlightId ? <Pencil className="w-8 h-8 text-warning" /> : <Plus className="w-8 h-8 text-warning" />}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">
+                    {editingFlightId ? `Edit Flight ${editingFlightId}` : 'Add New Flight'}
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {editingFlightId ? 'Update flight details below' : 'Fill in flight details to create a new schedule'}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Edit Flight Schedule</h2>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Update flight details and routing information
-                </p>
-              </div>
+              {editingFlightId && (
+                <Button variant="ghost" size="sm" onClick={resetForm}>
+                  <X className="w-4 h-4 mr-1" /> Cancel Edit
+                </Button>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               <Input
                 label="Flight ID"
                 icon={Plane}
                 type="text"
-                placeholder="e.g., FL001"
-                value={flightId}
-                onChange={(e) => setFlightId(e.target.value)}
+                placeholder="e.g., 101"
+                value={form.flight_id}
+                onChange={(e) => updateField('flight_id', e.target.value)}
+                disabled={!!editingFlightId}
               />
-
               <Input
-                label="Runway Number"
+                label="Airline ID"
+                icon={Hash}
                 type="text"
-                placeholder="e.g., RW01"
-                value={runwayNo}
-                onChange={(e) => setRunwayNo(e.target.value)}
+                placeholder="e.g., 1"
+                value={form.airline_id}
+                onChange={(e) => updateField('airline_id', e.target.value)}
               />
-
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Status
+                </label>
+                <select
+                  value={form.status}
+                  onChange={(e) => updateField('status', e.target.value)}
+                  className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
+                >
+                  <option value="scheduled">Scheduled</option>
+                  <option value="air">In Air</option>
+                  <option value="canceled">Cancelled</option>
+                </select>
+              </div>
               <Input
-                label="New Source"
+                label="Source"
                 icon={MapPin}
                 type="text"
                 placeholder="e.g., DEL"
-                value={newSource}
-                onChange={(e) => setNewSource(e.target.value)}
+                value={form.source}
+                onChange={(e) => updateField('source', e.target.value)}
               />
-
               <Input
-                label="New Destination"
+                label="Destination"
                 icon={MapPin}
                 type="text"
                 placeholder="e.g., BOM"
-                value={newDestination}
-                onChange={(e) => setNewDestination(e.target.value)}
+                value={form.destination}
+                onChange={(e) => updateField('destination', e.target.value)}
               />
-
               <Input
-                label="New Time"
+                label="Date"
+                type="date"
+                value={form.date}
+                onChange={(e) => updateField('date', e.target.value)}
+              />
+              <Input
+                label="Departure"
                 icon={Clock}
                 type="time"
-                value={newTime}
-                onChange={(e) => setNewTime(e.target.value)}
+                value={form.departure}
+                onChange={(e) => updateField('departure', e.target.value)}
               />
-
               <Input
-                label="Departure Date"
-                type="date"
-                value={departureDate}
-                onChange={(e) => setDepartureDate(e.target.value)}
+                label="Arrival"
+                icon={Clock}
+                type="time"
+                value={form.arrival}
+                onChange={(e) => updateField('arrival', e.target.value)}
+              />
+              <Input
+                label="Runway"
+                type="text"
+                placeholder="e.g., 1"
+                value={form.runway_no}
+                onChange={(e) => updateField('runway_no', e.target.value)}
+              />
+              <Input
+                label="Available Seats"
+                icon={Users}
+                type="number"
+                min="0"
+                placeholder="e.g., 180"
+                value={form.available_seats}
+                onChange={(e) => updateField('available_seats', e.target.value)}
+              />
+              <Input
+                label="Price"
+                icon={DollarSign}
+                type="number"
+                min="0"
+                placeholder="e.g., 5000"
+                value={form.price}
+                onChange={(e) => updateField('price', e.target.value)}
               />
             </div>
 
-            <div className="mt-6">
-              <Button onClick={handleEditSchedule} size="lg">
-                <Pencil className="mr-2" />
-                Update Flight Schedule
+            <div className="mt-6 flex gap-3">
+              <Button onClick={handleSubmit} size="lg">
+                {editingFlightId ? (
+                  <><Pencil className="mr-2 w-5 h-5" /> Update Flight</>
+                ) : (
+                  <><Plus className="mr-2 w-5 h-5" /> Add Flight</>
+                )}
               </Button>
+              {editingFlightId && (
+                <Button variant="outline" size="lg" onClick={resetForm}>
+                  Cancel
+                </Button>
+              )}
             </div>
           </Card>
 
-          {/* Alternative Flights */}
-          {alternativeFlights.length > 0 && (
-            <Card padding="lg">
-              <h3 className="text-xl font-bold mb-4">Alternative Flights</h3>
-              <div className="space-y-4">
-                {alternativeFlights.map((flight, index) => (
-                  <Card key={index} className="bg-gray-50 dark:bg-gray-800/50" padding="md">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Flight ID:</span>
-                        <p className="font-semibold">{flight.flight_id}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Airline:</span>
-                        <p className="font-semibold">{flight.airline_id}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Departure:</span>
-                        <p className="font-semibold">{flight.departure}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Arrival:</span>
-                        <p className="font-semibold">{flight.arrival}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Available Seats:</span>
-                        <p className="font-semibold">{flight.available_seats}</p>
-                      </div>
-                      <div>
-                        <span className="text-gray-600 dark:text-gray-400">Price:</span>
-                        <p className="font-semibold text-primary">{formatPrice(flight.price)}</p>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+          {/* Flights Table */}
+          <Card padding="lg">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold">All Flights</h2>
+              <Badge variant="primary" size="md">{flights.length} flights</Badge>
+            </div>
+
+            {loading ? (
+              <p className="text-center text-gray-500 py-8">Loading flights...</p>
+            ) : flights.length === 0 ? (
+              <p className="text-center text-gray-500 py-8">No flights found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Flight</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Route</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Date</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Time</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Seats</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Price</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                      <th className="text-left py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Runway</th>
+                      <th className="text-right py-3 px-3 font-semibold text-gray-600 dark:text-gray-400">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {flights.map((flight) => (
+                      <tr
+                        key={flight.flight_id}
+                        className={`border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors ${
+                          editingFlightId === flight.flight_id ? 'bg-primary/5' : ''
+                        }`}
+                      >
+                        <td className="py-3 px-3 font-semibold">{flight.flight_id}</td>
+                        <td className="py-3 px-3">{flight.source} &rarr; {flight.destination}</td>
+                        <td className="py-3 px-3">{flight.date ? new Date(flight.date).toLocaleDateString() : 'N/A'}</td>
+                        <td className="py-3 px-3">
+                          {flight.departure ? flight.departure.slice(0, 5) : '—'} - {flight.arrival ? flight.arrival.slice(0, 5) : '—'}
+                        </td>
+                        <td className="py-3 px-3">{flight.available_seats}</td>
+                        <td className="py-3 px-3 font-semibold text-primary">{formatPrice(flight.price)}</td>
+                        <td className="py-3 px-3">
+                          <Badge variant={statusColor(flight.status)} size="sm">
+                            {flight.status}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-3">{flight.runway_no}</td>
+                        <td className="py-3 px-3">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" onClick={() => handleEditClick(flight)}>
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="danger" size="sm" onClick={() => handleDelete(flight.flight_id)}>
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            </Card>
-          )}
+            )}
+          </Card>
         </div>
       </div>
     </Layout>

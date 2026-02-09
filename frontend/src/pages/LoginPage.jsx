@@ -53,14 +53,6 @@ function LoginForm({ onLoginSuccess }) {
     }
 
     try {
-      if (isAdminUser(email)) {
-        onLoginSuccess(email);
-        setSuccess('Admin Login Successful');
-        setError(null);
-        navigate('/admin');
-        return;
-      }
-
       const response = await fetch(getApiUrl(ENDPOINTS.LOGIN), {
         method: 'POST',
         headers: {
@@ -87,7 +79,7 @@ function LoginForm({ onLoginSuccess }) {
 
       onLoginSuccess(email);
 
-      if (data.user.role == 'admin') {
+      if (isAdminUser(email)) {
         console.log('Admin logged in', data.user);
         navigate('/admin');
       } else {

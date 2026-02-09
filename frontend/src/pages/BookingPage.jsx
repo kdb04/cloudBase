@@ -76,8 +76,10 @@ const Booking = ({ isLoggedIn }) => {
 
   const handleSearch = async () => {
     try {
+      const params = new URLSearchParams({ source, destination });
+      if (departureDate) params.append('date', departureDate);
       const response = await fetch(
-        `${getApiUrl(ENDPOINTS.AVAILABLE_FLIGHTS)}?source=${source}&destination=${destination}`
+        `${getApiUrl(ENDPOINTS.AVAILABLE_FLIGHTS)}?${params}`
       );
       if (!response.ok) {
         throw new Error('Failed to fetch flight data');
