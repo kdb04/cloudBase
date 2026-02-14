@@ -165,7 +165,7 @@ const cancelTicket = (req, res) => {
 };
 
 const getAvailableFlights = (req, res) => {
-    const { source, destination, date } = req.query;
+    const { source, destination, date, min_price, max_price } = req.query;
     console.log(`[READ] Searching flights: ${source} -> ${destination}${date ? ` on ${date}` : ''}`);
 
     let query = "SELECT flight_id, airline_id, source, destination, available_seats, price, arrival, departure, date FROM Flights WHERE source = ? AND destination = ?";
@@ -174,6 +174,16 @@ const getAvailableFlights = (req, res) => {
     if (date) {
         query += " AND date = ?";
         params.push(date);
+    }
+
+    if (min_price) {
+        query += " AND price >= ?";
+        params.push(Number(min_price));
+    }
+
+    if (max_price) {
+        query += " AND price <= ?";
+        params.push(Number(max_price));
     }
 
     db.query(query, params, (err, results) => {

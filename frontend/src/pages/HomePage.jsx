@@ -1,12 +1,79 @@
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plane, ShieldCheck, Sun, Luggage, HeartPulse, Droplets, Wind } from 'lucide-react';
+import { Plane, ShieldCheck, Sun, Cloud, CloudRain, CloudSnow, CloudLightning, CloudDrizzle, CloudFog, Luggage, HeartPulse, Droplets, Wind, Search, Loader2, MapPin } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { Card, Button, Badge } from '../components/ui';
 import AirlineLogos from '../components/home/AirlineLogos';
 import { fadeInUp, staggerContainer, scaleIn } from '../utils/animations';
 
+const WEATHER_API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+
+const getWeatherIcon = (condition) => {
+  if (!condition) return Sun;
+  const main = condition.toLowerCase();
+  if (main.includes('thunder')) return CloudLightning;
+  if (main.includes('drizzle')) return CloudDrizzle;
+  if (main.includes('rain')) return CloudRain;
+  if (main.includes('snow')) return CloudSnow;
+  if (main.includes('mist') || main.includes('fog') || main.includes('haze') || main.includes('smoke')) return CloudFog;
+  if (main.includes('cloud')) return Cloud;
+  return Sun;
+};
+
 const HomePage = () => {
+  const [city, setCity] = useState('Bangalore');
+  const [cityInput, setCityInput] = useState('');
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(true);
+  const [weatherError, setWeatherError] = useState('');
+
+  const fetchWeather = useCallback(async (targetCity) => {
+    if (!WEATHER_API_KEY) {
+      setWeatherError('API key not configured');
+      setWeatherLoading(false);
+      return;
+    }
+    setWeatherLoading(true);
+    setWeatherError('');
+    try {
+      const res = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(targetCity)}&units=metric&appid=${WEATHER_API_KEY}`
+      );
+      if (!res.ok) {
+        throw new Error(res.status === 404 ? 'City not found' : 'Failed to fetch weather');
+      }
+      const data = await res.json();
+      setWeather({
+        temp: Math.round(data.main.temp),
+        humidity: data.main.humidity,
+        wind: Math.round(data.wind.speed * 3.6),
+        condition: data.weather[0]?.main || '',
+        description: data.weather[0]?.description || '',
+        cityName: data.name,
+      });
+    } catch (err) {
+      setWeatherError(err.message);
+    } finally {
+      setWeatherLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchWeather(city);
+  }, [city, fetchWeather]);
+
+  const handleCitySearch = (e) => {
+    e.preventDefault();
+    const trimmed = cityInput.trim();
+    if (trimmed) {
+      setCity(trimmed);
+      setCityInput('');
+    }
+  };
+
+  const WeatherIcon = weather ? getWeatherIcon(weather.condition) : Sun;
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -70,29 +137,64 @@ const HomePage = () => {
           <motion.div variants={fadeInUp}>
             <Card hover className="group h-full">
               <div className="flex items-start space-x-4">
-                <Sun className="w-6 h-6 text-warning flex-shrink-0 mt-1" />
+                <WeatherIcon className="w-6 h-6 text-warning flex-shrink-0 mt-1" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-3">Weather Updates</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center text-gray-600 dark:text-gray-400">
-                        <Sun className="mr-2 w-4 h-4" /> Temperature
-                      </span>
-                      <span className="font-medium">28°C</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center text-gray-600 dark:text-gray-400">
-                        <Droplets className="mr-2 w-4 h-4" /> Humidity
-                      </span>
-                      <span className="font-medium">60%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center text-gray-600 dark:text-gray-400">
-                        <Wind className="mr-2 w-4 h-4" /> Wind Speed
-                      </span>
-                      <span className="font-medium">15 km/h</span>
-                    </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-lg">Weather Updates</h3>
                   </div>
+
+                  <form onSubmit={handleCitySearch} className="flex gap-1.5 mb-3">
+                    <input
+                      type="text"
+                      value={cityInput}
+                      onChange={(e) => setCityInput(e.target.value)}
+                      placeholder={city}
+                      className="flex-1 min-w-0 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-2 py-1 text-xs focus:ring-1 focus:ring-primary focus:border-primary"
+                    />
+                    <button
+                      type="submit"
+                      className="p-1 rounded-md bg-primary text-white hover:bg-primary/90 transition-colors"
+                    >
+                      <Search className="w-3.5 h-3.5" />
+                    </button>
+                  </form>
+
+                  {weatherLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                    </div>
+                  ) : weatherError ? (
+                    <p className="text-xs text-red-400 py-2">{weatherError}</p>
+                  ) : weather && (
+                    <>
+                      <div className="flex items-center gap-1 mb-2">
+                        <MapPin className="w-3 h-3 text-gray-400" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {weather.cityName} — {weather.description}
+                        </span>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center text-gray-600 dark:text-gray-400">
+                            <WeatherIcon className="mr-2 w-4 h-4" /> Temperature
+                          </span>
+                          <span className="font-medium">{weather.temp}°C</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center text-gray-600 dark:text-gray-400">
+                            <Droplets className="mr-2 w-4 h-4" /> Humidity
+                          </span>
+                          <span className="font-medium">{weather.humidity}%</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="flex items-center text-gray-600 dark:text-gray-400">
+                            <Wind className="mr-2 w-4 h-4" /> Wind Speed
+                          </span>
+                          <span className="font-medium">{weather.wind} km/h</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </Card>

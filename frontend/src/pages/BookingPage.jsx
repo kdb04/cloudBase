@@ -22,7 +22,7 @@ import { fadeInUp, staggerContainer } from '../utils/animations';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
 import { getAuthToken, getAuthHeaders } from '../utils/auth';
 import { getFormattedFlightDuration } from '../utils/dateTime';
-import { sortFlights } from '../utils/filters';
+import { sortFlights, filterFlights } from '../utils/filters';
 import { formatPrice } from '../utils/formatters';
 import { TRIP_TYPES, CABIN_CLASSES } from '../utils/constants';
 
@@ -47,7 +47,8 @@ const Booking = ({ isLoggedIn }) => {
   const [sortBy, setSortBy] = useState('recommended');
 
   const [showFilters, setShowFilters] = useState(false);
-  const [priceRange] = useState([0, 10000]);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
   const [stops, setStops] = useState({ direct: false, oneStop: false, twoPlus: false });
 
   const [showRerouteModal, setShowRerouteModal] = useState(false);
@@ -78,6 +79,8 @@ const Booking = ({ isLoggedIn }) => {
     try {
       const params = new URLSearchParams({ source, destination });
       if (departureDate) params.append('date', departureDate);
+      if (minPrice !== '') params.append('min_price', minPrice);
+      if (maxPrice !== '') params.append('max_price', maxPrice);
       const response = await fetch(
         `${getApiUrl(ENDPOINTS.AVAILABLE_FLIGHTS)}?${params}`
       );
@@ -206,8 +209,9 @@ const Booking = ({ isLoggedIn }) => {
     }
   };
 
-  const getSortedFlights = () => {
-    return sortFlights(availableFlights, sortBy);
+  const getFilteredAndSortedFlights = () => {
+    const filtered = filterFlights(availableFlights, { stops, minPrice, maxPrice, directOnly });
+    return sortFlights(filtered, sortBy);
   };
 
   return (
@@ -388,7 +392,7 @@ const Booking = ({ isLoggedIn }) => {
                   </div>
 
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Showing {availableFlights.length} results
+                    Showing {getFilteredAndSortedFlights().length} of {availableFlights.length} results
                   </p>
                 </div>
               </div>
@@ -404,7 +408,11 @@ const Booking = ({ isLoggedIn }) => {
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-semibold text-lg">Filters</h3>
                       <button
-                        onClick={() => setStops({ direct: false, oneStop: false, twoPlus: false })}
+                        onClick={() => {
+                          setStops({ direct: false, oneStop: false, twoPlus: false });
+                          setMinPrice('');
+                          setMaxPrice('');
+                        }}
                         className="text-sm text-primary hover:underline"
                       >
                         Clear all
@@ -443,6 +451,34 @@ const Booking = ({ isLoggedIn }) => {
                         </label>
                       </div>
                     </div>
+
+                    <div className="mb-6">
+                      <h4 className="font-medium mb-3">Price Range</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Min Price</label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={minPrice}
+                            onChange={(e) => setMinPrice(e.target.value)}
+                            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Max Price</label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="No limit"
+                            value={maxPrice}
+                            onChange={(e) => setMaxPrice(e.target.value)}
+                            className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-primary"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </Card>
                 </motion.div>
 
@@ -452,7 +488,18 @@ const Booking = ({ isLoggedIn }) => {
                   animate="visible"
                   variants={staggerContainer}
                 >
-                  {getSortedFlights().map((flight) => (
+                  {getFilteredAndSortedFlights().length === 0 && (
+                    <div className="text-center py-12 px-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                      <SlidersHorizontal className="w-12 h-12 mx-auto text-yellow-400 mb-4" />
+                      <h3 className="text-lg font-semibold text-yellow-400 mb-2">
+                        No Flights Match Your Filters
+                      </h3>
+                      <p className="text-gray-400 text-sm max-w-md mx-auto">
+                        {availableFlights.length} flight{availableFlights.length > 1 ? 's' : ''} found, but none match your current filters. Try adjusting or clearing your filters.
+                      </p>
+                    </div>
+                  )}
+                  {getFilteredAndSortedFlights().map((flight) => (
                     <motion.div
                       key={flight.flight_id}
                       variants={fadeInUp}
