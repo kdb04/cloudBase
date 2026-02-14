@@ -1,5 +1,6 @@
 const db = require("../connection/db.js");
 const nodemailer = require("nodemailer");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -139,29 +140,147 @@ const bookTicket = (req, res) => {
     });
 };
 
-const cancelTicket = (req, res) => {
+const sendCancellationEmail = (email, ticket, refundInfo) => {
+    const refundStatusColor = refundInfo.status === 'succeeded' ? '#dcfce7' : '#fef3c7';
+    const refundStatusTextColor = refundInfo.status === 'succeeded' ? '#166534' : '#92400e';
+    const refundLabel = refundInfo.status === 'succeeded' ? 'Refund Processed'
+        : refundInfo.status === 'pending' ? 'Refund Pending'
+        : refundInfo.status === 'no_payment' ? 'No Payment to Refund'
+        : 'Refund Failed';
+
+    const mailOptions = {
+        from: `"CloudBase" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Booking Cancelled - Ticket #${ticket.ticket_id}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #ef4444; color: white; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
+                    <h1 style="margin: 0;">Booking Cancelled</h1>
+                    <p style="margin: 8px 0 0;">Ticket #${ticket.ticket_id}</p>
+                </div>
+
+                <div style="border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 24px;">
+                    <h3 style="color: #374151; margin-top: 0;">Flight Details</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Flight</td>
+                            <td style="padding: 8px 0; font-weight: bold;">${ticket.flight_id}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Route</td>
+                            <td style="padding: 8px 0; font-weight: bold;">${ticket.source} → ${ticket.destination}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Class</td>
+                            <td style="padding: 8px 0; font-weight: bold;">${ticket.class || 'N/A'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Seat</td>
+                            <td style="padding: 8px 0; font-weight: bold;">${ticket.seat_no || 'N/A'}</td>
+                        </tr>
+                    </table>
+
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;" />
+
+                    <h3 style="color: #374151;">Refund Details</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Status</td>
+                            <td style="padding: 8px 0;">
+                                <span style="background-color: ${refundStatusColor}; color: ${refundStatusTextColor}; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: bold;">
+                                    ${refundLabel}
+                                </span>
+                            </td>
+                        </tr>
+                        ${refundInfo.amount ? `
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Refund Amount</td>
+                            <td style="padding: 8px 0; font-weight: bold;">₹${(refundInfo.amount / 100).toFixed(2)}</td>
+                        </tr>` : ''}
+                        ${refundInfo.refund_id ? `
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Refund ID</td>
+                            <td style="padding: 8px 0; font-size: 13px; font-family: monospace;">${refundInfo.refund_id}</td>
+                        </tr>` : ''}
+                    </table>
+
+                    <p style="color: #6b7280; margin-top: 24px; font-size: 12px; text-align: center;">
+                        If you have any questions, please contact our support team.
+                    </p>
+                </div>
+            </div>
+        `
+    };
+
+    transporter.sendMail(mailOptions)
+        .then(() => console.log(`[CANCEL] Cancellation email sent to: ${email}`))
+        .catch((err) => console.error(`[CANCEL] Failed to send cancellation email: ${err.message}`));
+};
+
+const cancelTicket = async (req, res) => {
     const { ticket_id } = req.params;
+    const userEmail = req.user.email;
     console.log(`[CANCEL] Attempting to cancel ticket ID: ${ticket_id}`);
-    const deleteQuery = "DELETE FROM ticket WHERE ticket_id = ?";
 
-    db.query(deleteQuery, [ticket_id], (err, results) => {
-        if (err){
-            console.log(`[CANCEL] FAILED - Error cancelling ticket ${ticket_id}: ${err.message}`);
-            return res.status(500).json({ message: "Error cancelling flight", error: err});
+    // Fetch ticket details before deletion
+    db.query(
+        "SELECT ticket_id, flight_id, transaction_id, payment_status, source, destination, class, seat_no, food_preference FROM ticket WHERE ticket_id = ?",
+        [ticket_id],
+        async (err, ticketResults) => {
+            if (err) {
+                console.log(`[CANCEL] FAILED - Error fetching ticket ${ticket_id}: ${err.message}`);
+                return res.status(500).json({ message: "Error cancelling flight", error: err });
+            }
+            if (ticketResults.length === 0) {
+                console.log(`[CANCEL] NOT FOUND - Ticket ID: ${ticket_id}`);
+                return res.status(404).json({ message: "Ticket not found" });
+            }
+
+            const ticket = ticketResults[0];
+            let refundInfo = { status: 'no_payment', refund_id: null, amount: null };
+
+            // Attempt Stripe refund if payment was made
+            if (ticket.transaction_id && ticket.payment_status === 'Paid') {
+                try {
+                    const refund = await stripe.refunds.create({
+                        payment_intent: ticket.transaction_id,
+                    });
+                    refundInfo = {
+                        status: refund.status,
+                        refund_id: refund.id,
+                        amount: refund.amount,
+                    };
+                    console.log(`[CANCEL] Refund ${refund.status} - Refund ID: ${refund.id}, Amount: ${refund.amount}`);
+                } catch (refundErr) {
+                    console.error(`[CANCEL] Refund failed for ticket ${ticket_id}: ${refundErr.message}`);
+                    refundInfo = { status: 'failed', refund_id: null, amount: null };
+                }
+            }
+
+            // Delete the ticket
+            db.query("DELETE FROM ticket WHERE ticket_id = ?", [ticket_id], (deleteErr) => {
+                if (deleteErr) {
+                    console.log(`[CANCEL] FAILED - Error deleting ticket ${ticket_id}: ${deleteErr.message}`);
+                    return res.status(500).json({ message: "Error cancelling flight", error: deleteErr });
+                }
+
+                // Update dynamic pricing using flight_id fetched before deletion
+                db.query("CALL dynamic_pricing(?)", [ticket.flight_id], (priceErr) => {
+                    if (priceErr) console.error(`[CANCEL] Error updating dynamic pricing: ${priceErr.message}`);
+                });
+
+                // Send cancellation email
+                sendCancellationEmail(userEmail, ticket, refundInfo);
+
+                console.log(`[CANCEL] SUCCESS - Ticket ID: ${ticket_id} cancelled`);
+                return res.status(200).json({
+                    message: "Flight booking cancelled successfully",
+                    refund_status: refundInfo.status,
+                    refund_id: refundInfo.refund_id,
+                });
+            });
         }
-        if (results.affectedRows === 0){
-            console.log(`[CANCEL] NOT FOUND - Ticket ID: ${ticket_id}`);
-            return res.status(404).json({ message: "Ticket not found" });
-        }
-
-        const getFlightQuery = "SELECT flight_id FROM ticket WHERE ticket_id=?";
-        db.query(getFlightQuery, [ticket_id], (flightErr, flightResult) => {
-            if(!flightErr && flightResult.length>0) db.query("CALL dynamic_pricing(?)", [flightResult[0].flight_id]);
-        });
-
-        console.log(`[CANCEL] SUCCESS - Ticket ID: ${ticket_id} cancelled`);
-        return res.status(200).json({ message: "Flight booking cancelled successfully"});
-    });
+    );
 };
 
 const getAvailableFlights = (req, res) => {
