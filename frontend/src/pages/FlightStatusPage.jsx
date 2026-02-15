@@ -55,18 +55,20 @@ const FlightStatusPage = () => {
             </div>
 
             <Card className="mb-8">
-              <form onSubmit={handleSearch} className="flex gap-3">
-                <label htmlFor="flight-id-input" className="sr-only">
-                  Flight ID
-                </label>
-                <Input
-                  id="flight-id-input"
-                  type="text"
-                  placeholder="Enter Flight ID (e.g. 101)"
-                  value={flightId}
-                  onChange={(e) => setFlightId(e.target.value)}
-                  className="flex-1"
-                />
+              <form onSubmit={handleSearch} className="flex items-center gap-3 w-full">
+                <div className="flex-1">
+                  <label htmlFor="flight-id-input" className="sr-only">
+                    Flight ID
+                  </label>
+                  <Input
+                    id="flight-id-input"
+                    type="text"
+                    placeholder="Enter Flight ID (e.g. 101)"
+                    value={flightId}
+                    onChange={(e) => setFlightId(e.target.value)}
+                    className="flex-1"
+                  />
+                </div>
                 <Button type="submit" disabled={loading}>
                   {loading ? (
                     <span className="flex items-center gap-2">

@@ -616,7 +616,7 @@ const Booking = ({ isLoggedIn }) => {
               </div>
 
               {isMultiCity ? (
-                <div className="space-y-3 mb-4">
+                <div className="space-y-3 mb-4 text-center">
                   {legs.map((leg, index) => (
                     <div
                       key={index}
@@ -674,7 +674,7 @@ const Booking = ({ isLoggedIn }) => {
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_1fr] gap-x-10 gap-y-6 mb-6 text-center">
                   <div className="relative">
                     <Input
                       label="Flying From"
@@ -688,7 +688,7 @@ const Booking = ({ isLoggedIn }) => {
                   <div className="relative">
                     <button
                       onClick={handleSwapLocations}
-                      className="absolute -left-3 md:-left-8 top-6 mt-1 z-10 p-2 bg-white dark:bg-gray-800 rounded-full border-2 border-primary hover:bg-primary hover:text-white transition-colors hidden md:flex items-center justify-center"
+                      className="absolute -left-4 md:-left-[2.35rem] top-6 mt-1 z-10 p-2 bg-white dark:bg-gray-800 rounded-full border-2 border-primary hover:bg-primary hover:text-white transition-colors hidden md:flex items-center justify-center"
                       aria-label="Swap locations"
                     >
                       <ArrowLeftRight className="w-4 h-4" />
@@ -726,8 +726,8 @@ const Booking = ({ isLoggedIn }) => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 text-center">
+                <div className="md:col-span-1">
                   <Input
                     label="Passengers"
                     icon={Users}
@@ -735,17 +735,18 @@ const Booking = ({ isLoggedIn }) => {
                     min="1"
                     value={passengerNo}
                     onChange={(e) => setPassengerNo(e.target.value)}
+                    className="h-10 px-3 py-2"
                   />
                 </div>
 
-                <div>
+                <div className="md:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Cabin Class
                   </label>
                   <select
                     value={travelClass}
                     onChange={(e) => setTravelClass(e.target.value)}
-                    className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
+                    className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 h-10 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
                   >
                     {CABIN_CLASSES.map((cabin) => (
                       <option key={cabin.value} value={cabin.value}>
@@ -755,7 +756,7 @@ const Booking = ({ isLoggedIn }) => {
                   </select>
                 </div>
 
-                <div className="flex items-end">
+                <div className="md:col-span-1 flex items-center pt-6">
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="checkbox"
