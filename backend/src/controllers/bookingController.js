@@ -370,4 +370,18 @@ const getFlightStatus = (req, res) => {
     });
 };
 
-module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus };
+const getTakenSeats = (req, res) => {
+    const { flight_id } = req.params;
+    console.log(`[READ] Fetching taken seats for flight: ${flight_id}`);
+    db.query("SELECT seat_no FROM ticket WHERE flight_id = ?", [flight_id], (err, results) => {
+        if (err){
+            console.log(`[READ] FAILED - Error fetching taken seats for flight ${flight_id}: ${err.message}`);
+            return res.status(500).json({ message: "Error fetching taken seats", error: err.message });
+        }
+        const takenSeats = results.map(row => Number(row.seat_no));
+        console.log(`[READ] Found ${takenSeats.length} taken seats for flight ${flight_id}`);
+        return res.status(200).json({ takenSeats });
+    });
+};
+
+module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats };

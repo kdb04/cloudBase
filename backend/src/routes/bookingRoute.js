@@ -1,5 +1,5 @@
 const express = require("express");
-const { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus } = require("../controllers/bookingController");
+const { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats } = require("../controllers/bookingController");
 const router = express.Router();
 const db = require("../connection/db");
 const authenticateToken = require("../middleware/authMiddleware");
@@ -8,6 +8,7 @@ const authenticateToken = require("../middleware/authMiddleware");
 router.get("/available-flights", getAvailableFlights);
 router.get("/flight-status/:flight_id", getFlightStatus);
 router.post("/alternate-flights", getAlternateFlights);
+router.get("/taken-seats/:flight_id", getTakenSeats);
 
 //protected routes
 router.post("/", authenticateToken, bookTicket);

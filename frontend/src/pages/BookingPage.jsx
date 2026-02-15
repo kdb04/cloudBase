@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
-import { Card, Button, Input, Badge } from '../components/ui';
+import { Card, Button, Input, Badge, SeatMap } from '../components/ui';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { PaymentModal } from '../components/ui/PaymentModal';
@@ -27,6 +27,7 @@ import { getFormattedFlightDuration, formatTime } from '../utils/dateTime';
 import { sortFlights, filterFlights } from '../utils/filters';
 import { formatPrice } from '../utils/formatters';
 import { TRIP_TYPES, CABIN_CLASSES, FLIGHT_STATUSES } from '../utils/constants';
+
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -41,11 +42,11 @@ const Booking = ({ isLoggedIn }) => {
   const [departureDate, setDepartureDate] = useState('');
   const [returnDate, setReturnDate] = useState('');
   const [foodPreference, setFoodPreference] = useState('');
-  const [seatNo, setSeatNo] = useState('');
+  const [selectedSeats, setSelectedSeats] = useState([]);
 
   const [availableFlights, setAvailableFlights] = useState([]);
   const [selectedFlightId, setSelectedFlightId] = useState(null);
-  const [ticketId, setTicketId] = useState(null);
+  const [ticketIds, setTicketIds] = useState([]);
   const [sortBy, setSortBy] = useState('recommended');
 
   const [showFilters, setShowFilters] = useState(false);
@@ -67,7 +68,7 @@ const Booking = ({ isLoggedIn }) => {
   const [returnFlights, setReturnFlights] = useState([]);
   const [selectedReturnFlightId, setSelectedReturnFlightId] = useState(null);
   const [returnSearchPerformed, setReturnSearchPerformed] = useState(false);
-  const [returnTicketId, setReturnTicketId] = useState(null);
+  const [returnTicketIds, setReturnTicketIds] = useState([]);
   const [roundTripPhase, setRoundTripPhase] = useState('outbound');
   const [bookingRoundTripLeg, setBookingRoundTripLeg] = useState(null);
 
@@ -79,7 +80,7 @@ const Booking = ({ isLoggedIn }) => {
   const [currentLeg, setCurrentLeg] = useState(0);
   const [legFlights, setLegFlights] = useState([[], [], []]);
   const [legSelectedFlightId, setLegSelectedFlightId] = useState([null, null, null]);
-  const [legTicketId, setLegTicketId] = useState([null, null, null]);
+  const [legTicketIds, setLegTicketIds] = useState([null, null, null]);
   const [legSearchPerformed, setLegSearchPerformed] = useState([false, false, false]);
   const [bookingLegIndex, setBookingLegIndex] = useState(null);
 
@@ -102,6 +103,25 @@ const Booking = ({ isLoggedIn }) => {
     }
   }, [isLoggedIn, navigate]);
 
+  const handleSeatsChange = (seats) => {
+    setSelectedSeats(seats);
+  };
+
+  // Reset seats when flight selection changes
+  useEffect(() => {
+    setSelectedSeats([]);
+  }, [selectedFlightId, selectedReturnFlightId]);
+
+  // Reset seats when multi-city leg changes
+  useEffect(() => {
+    setSelectedSeats([]);
+  }, [currentLeg]);
+
+  // Clear seats when cabin class changes (so user re-picks seats in new class)
+  useEffect(() => {
+    setSelectedSeats([]);
+  }, [travelClass]);
+
   const isMultiCity = tripType === 'multicity';
   const isRoundTrip = tripType === 'roundtrip';
 
@@ -122,9 +142,9 @@ const Booking = ({ isLoggedIn }) => {
     ? (roundTripPhase === 'outbound' ? searchPerformed : returnSearchPerformed)
     : searchPerformed;
   const allLegsHaveSelection = isMultiCity && legs.every((_, i) => legSelectedFlightId[i] !== null);
-  const allLegsBooked = isMultiCity && legs.every((_, i) => legTicketId[i] !== null);
+  const allLegsBooked = isMultiCity && legs.every((_, i) => legTicketIds[i] !== null);
   const bothRoundTripSelected = isRoundTrip && selectedFlightId && selectedReturnFlightId;
-  const bothRoundTripBooked = isRoundTrip && ticketId && returnTicketId;
+  const bothRoundTripBooked = isRoundTrip && ticketIds.length > 0 && returnTicketIds.length > 0;
   const outboundFlight = isRoundTrip ? availableFlights.find(f => f.flight_id === selectedFlightId) : null;
   const returnSelectedFlight = isRoundTrip ? returnFlights.find(f => f.flight_id === selectedReturnFlightId) : null;
   const roundTripTotalPrice = (outboundFlight?.price || 0) + (returnSelectedFlight?.price || 0);
@@ -160,7 +180,7 @@ const Booking = ({ isLoggedIn }) => {
       next.push(false);
       return next;
     });
-    setLegTicketId(prev => {
+    setLegTicketIds(prev => {
       const next = [...prev];
       next.splice(index, 1);
       next.push(null);
@@ -307,6 +327,10 @@ const Booking = ({ isLoggedIn }) => {
       setError('Please select a flight');
       return;
     }
+    if (selectedSeats.length === 0) {
+      setError('Please select at least one seat');
+      return;
+    }
 
     try {
       const token = getAuthToken();
@@ -320,7 +344,8 @@ const Booking = ({ isLoggedIn }) => {
         headers: getAuthHeaders(),
         body: JSON.stringify({
             flight_id: selectedFlightId,
-            passenger_count: passengerNo
+            passenger_count: selectedSeats.length,
+            class: travelClass
         }),
       });
 
@@ -346,6 +371,10 @@ const Booking = ({ isLoggedIn }) => {
       setError(`No flight selected for Leg ${legIndex + 1}`);
       return;
     }
+    if (selectedSeats.length === 0) {
+      setError('Please select at least one seat');
+      return;
+    }
 
     try {
       const token = getAuthToken();
@@ -361,7 +390,8 @@ const Booking = ({ isLoggedIn }) => {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           flight_id: flightId,
-          passenger_count: passengerNo
+          passenger_count: selectedSeats.length,
+          class: travelClass
         }),
       });
 
@@ -386,6 +416,10 @@ const Booking = ({ isLoggedIn }) => {
       setError(`No flight selected for ${leg} trip`);
       return;
     }
+    if (selectedSeats.length === 0) {
+      setError('Please select at least one seat');
+      return;
+    }
 
     try {
       const token = getAuthToken();
@@ -401,7 +435,8 @@ const Booking = ({ isLoggedIn }) => {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           flight_id: flightId,
-          passenger_count: passengerNo
+          passenger_count: selectedSeats.length,
+          class: travelClass
         }),
       });
 
@@ -424,37 +459,52 @@ const Booking = ({ isLoggedIn }) => {
     if (isMultiCity && bookingLegIndex !== null) {
       const legIndex = bookingLegIndex;
       const leg = legs[legIndex];
-      const bookingData = {
-        passenger_no: passengerNo,
-        class: travelClass,
-        food_preference: foodPreference,
-        date: leg.date,
-        source: leg.source,
-        destination: leg.destination,
-        seat_no: seatNo,
-        flight_id: legSelectedFlightId[legIndex],
-        transaction_id: paymentIntentId
-      };
+      const ticketIds = [];
 
       try {
-        const response = await fetch(getApiUrl(ENDPOINTS.CREATE_BOOKING), {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(bookingData),
-        });
-        if (!response.ok) throw new Error('Failed to book flight');
-        const result = await response.json();
-        setLegTicketId(prev => {
+        for (const seat of selectedSeats) {
+          const bookingData = {
+            passenger_no: passengerNo,
+            class: travelClass,
+            food_preference: foodPreference,
+            date: leg.date,
+            source: leg.source,
+            destination: leg.destination,
+            seat_no: seat.seatNo,
+            flight_id: legSelectedFlightId[legIndex],
+            transaction_id: paymentIntentId
+          };
+          const response = await fetch(getApiUrl(ENDPOINTS.CREATE_BOOKING), {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(bookingData),
+          });
+          if (!response.ok) throw new Error(`Failed to book seat ${seat.seatNo}`);
+          const result = await response.json();
+          ticketIds.push(result.ticket_id);
+        }
+        setLegTicketIds(prev => {
           const next = [...prev];
-          next[legIndex] = result.ticket_id;
+          next[legIndex] = ticketIds;
           return next;
         });
         setBookingLegIndex(null);
-        setSuccess(`Leg ${legIndex + 1} booked successfully! Ticket ID: ${result.ticket_id}`);
+        setSelectedSeats([]);
+        setSuccess(`Leg ${legIndex + 1} booked! Ticket IDs: ${ticketIds.map(id => '#' + id).join(', ')}`);
       } catch (err) {
         console.error('Error during booking:', err);
+        if (ticketIds.length > 0) {
+          setLegTicketIds(prev => {
+            const next = [...prev];
+            next[legIndex] = ticketIds;
+            return next;
+          });
+          setSelectedSeats([]);
+          setError(`Partial booking: ${ticketIds.length} of ${selectedSeats.length} seats booked (Tickets ${ticketIds.map(id => '#' + id).join(', ')}). ${selectedSeats.length - ticketIds.length} seat(s) failed. Contact support for a partial refund.`);
+        } else {
+          setError('Payment succeeded but booking failed. Please contact support.');
+        }
         setBookingLegIndex(null);
-        setError('Payment succeeded but booking failed. Please contact support.');
       }
       return;
     }
@@ -462,103 +512,130 @@ const Booking = ({ isLoggedIn }) => {
     if (isRoundTrip && bookingRoundTripLeg !== null) {
       const leg = bookingRoundTripLeg;
       const isReturn = leg === 'return';
-      const bookingData = {
-        passenger_no: passengerNo,
-        class: travelClass,
-        food_preference: foodPreference,
-        date: isReturn ? returnDate : departureDate,
-        source: isReturn ? destination : source,
-        destination: isReturn ? source : destination,
-        seat_no: seatNo,
-        flight_id: isReturn ? selectedReturnFlightId : selectedFlightId,
-        transaction_id: paymentIntentId
-      };
+      const ticketIds = [];
 
       try {
+        for (const seat of selectedSeats) {
+          const bookingData = {
+            passenger_no: passengerNo,
+            class: travelClass,
+            food_preference: foodPreference,
+            date: isReturn ? returnDate : departureDate,
+            source: isReturn ? destination : source,
+            destination: isReturn ? source : destination,
+            seat_no: seat.seatNo,
+            flight_id: isReturn ? selectedReturnFlightId : selectedFlightId,
+            transaction_id: paymentIntentId
+          };
+          const response = await fetch(getApiUrl(ENDPOINTS.CREATE_BOOKING), {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(bookingData),
+          });
+          if (!response.ok) throw new Error(`Failed to book seat ${seat.seatNo}`);
+          const result = await response.json();
+          ticketIds.push(result.ticket_id);
+        }
+        if (isReturn) {
+          setReturnTicketIds(ticketIds);
+        } else {
+          setTicketIds(ticketIds);
+        }
+        setBookingRoundTripLeg(null);
+        setSelectedSeats([]);
+        setSuccess(`${isReturn ? 'Return' : 'Outbound'} flight booked! Ticket IDs: ${ticketIds.map(id => '#' + id).join(', ')}`);
+      } catch (err) {
+        console.error('Error during booking:', err);
+        if (ticketIds.length > 0) {
+          if (isReturn) {
+            setReturnTicketIds(ticketIds);
+          } else {
+            setTicketIds(ticketIds);
+          }
+          setSelectedSeats([]);
+          setError(`Partial booking: ${ticketIds.length} of ${selectedSeats.length} seats booked (Tickets ${ticketIds.map(id => '#' + id).join(', ')}). ${selectedSeats.length - ticketIds.length} seat(s) failed. Contact support for a partial refund.`);
+        } else {
+          setError('Payment succeeded but booking failed. Please contact support.');
+        }
+        setBookingRoundTripLeg(null);
+      }
+      return;
+    }
+
+    const ticketIds = [];
+    try {
+      for (const seat of selectedSeats) {
+        const bookingData = {
+          passenger_no: passengerNo,
+          class: travelClass,
+          food_preference: foodPreference,
+          date: departureDate,
+          source,
+          destination,
+          seat_no: seat.seatNo,
+          flight_id: selectedFlightId,
+          transaction_id: paymentIntentId
+        };
         const response = await fetch(getApiUrl(ENDPOINTS.CREATE_BOOKING), {
           method: 'POST',
           headers: getAuthHeaders(),
           body: JSON.stringify(bookingData),
         });
-        if (!response.ok) throw new Error('Failed to book flight');
+        if (!response.ok) throw new Error(`Failed to book seat ${seat.seatNo}`);
         const result = await response.json();
-        if (isReturn) {
-          setReturnTicketId(result.ticket_id);
-        } else {
-          setTicketId(result.ticket_id);
-        }
-        setBookingRoundTripLeg(null);
-        setSuccess(`${isReturn ? 'Return' : 'Outbound'} flight booked! Ticket ID: ${result.ticket_id}`);
-      } catch (err) {
-        console.error('Error during booking:', err);
-        setBookingRoundTripLeg(null);
-        setError('Payment succeeded but booking failed. Please contact support.');
+        ticketIds.push(result.ticket_id);
       }
-      return;
-    }
-
-    const bookingData = {
-      passenger_no: passengerNo,
-      class: travelClass,
-      food_preference: foodPreference,
-      date: departureDate,
-      source,
-      destination,
-      seat_no: seatNo,
-      flight_id: selectedFlightId,
-      transaction_id: paymentIntentId
-    };
-
-    try {
-      const response = await fetch(getApiUrl(ENDPOINTS.CREATE_BOOKING), {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(bookingData),
-      });
-
-      if (!response.ok) throw new Error('Failed to book flight');
-
-      const result = await response.json();
-      console.log('Booking successful:', result);
-      setTicketId(result.ticket_id);
-      setSuccess(`Booking successful! Ticket ID: ${result.ticket_id}`);
+      console.log('Booking successful:', ticketIds);
+      setTicketIds(ticketIds);
+      setSelectedSeats([]);
+      setSuccess(`Booking successful! Ticket IDs: ${ticketIds.map(id => '#' + id).join(', ')}`);
     } catch (err) {
       console.error('Error during booking:', err);
-      setError('Payment succeeded but booking failed. Please contact support.');
+      if (ticketIds.length > 0) {
+        setTicketIds(ticketIds);
+        setSelectedSeats([]);
+        setError(`Partial booking: ${ticketIds.length} of ${selectedSeats.length} seats booked (Tickets ${ticketIds.map(id => '#' + id).join(', ')}). ${selectedSeats.length - ticketIds.length} seat(s) failed. Contact support for a partial refund.`);
+      } else {
+        setError('Payment succeeded but booking failed. Please contact support.');
+      }
     }
   };
 
   const handleCancel = async () => {
-    if (!ticketId) return;
+    if (ticketIds.length === 0) return;
 
     try {
       const token = getAuthToken();
-      const response = await fetch(getApiUrl(ENDPOINTS.CANCEL_BOOKING(ticketId)), {
-        method: 'DELETE',
-        headers: {
+      const results = [];
+      for (const id of ticketIds) {
+        const response = await fetch(getApiUrl(ENDPOINTS.CANCEL_BOOKING(id)), {
+          method: 'DELETE',
+          headers: {
             'Authorization': `Bearer ${token}`
-        }
-      });
+          }
+        });
+        if (!response.ok) throw new Error(`Failed to cancel ticket #${id}`);
+        const result = await response.json();
+        results.push(result);
+      }
 
-      if (!response.ok) throw new Error('Failed to cancel booking');
-
-      const result = await response.json();
-      console.log('Booking canceled:', result);
+      console.log('Bookings canceled:', results);
 
       setSelectedFlightId(null);
-      setTicketId(null);
+      setTicketIds([]);
       setAvailableFlights([]);
 
-      const refundMsg = result.refund_status === 'succeeded'
-        ? 'Refund has been processed. Check your email for details.'
-        : result.refund_status === 'pending'
-        ? 'Refund is being processed. Check your email for details.'
-        : result.refund_status === 'no_payment'
-        ? 'No payment was associated with this booking.'
-        : result.refund_status === 'failed'
-        ? 'Refund could not be processed. Please contact support.'
+      const lastResult = results[results.length - 1];
+      const refundMsg = lastResult.refund_status === 'succeeded'
+        ? 'Refunds have been processed. Check your email for details.'
+        : lastResult.refund_status === 'pending'
+        ? 'Refunds are being processed. Check your email for details.'
+        : lastResult.refund_status === 'no_payment'
+        ? 'No payment was associated with these bookings.'
+        : lastResult.refund_status === 'failed'
+        ? 'Refunds could not be processed. Please contact support.'
         : '';
-      setSuccess(`Booking cancelled successfully.${refundMsg ? ' ' + refundMsg : ''}`);
+      setSuccess(`${ticketIds.length} ticket${ticketIds.length > 1 ? 's' : ''} cancelled successfully.${refundMsg ? ' ' + refundMsg : ''}`);
     } catch (err) {
       console.error('Error during cancellation:', err);
       setError('Cancellation failed. Please try again.');
@@ -587,6 +664,10 @@ const Booking = ({ isLoggedIn }) => {
     const filtered = filterFlights(currentFlights, { stops, minPrice, maxPrice, directOnly });
     return sortFlights(filtered, sortBy);
   };
+
+  const unbookedLegIndex = legs.findIndex((_, i) => !legTicketIds[i] && legSelectedFlightId[i]);
+  const activeLegIndex = unbookedLegIndex >= 0 ? unbookedLegIndex : 0;
+  const activeLegFlight = legFlights[activeLegIndex]?.find(f => f.flight_id === legSelectedFlightId[activeLegIndex]);
 
   return (
     <Layout>
@@ -742,11 +823,17 @@ const Booking = ({ isLoggedIn }) => {
                 <div className="md:col-span-1">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Cabin Class
+                    {selectedSeats.length > 0 && (
+                      <span className="text-xs text-gray-400 ml-1">(clear seats to change)</span>
+                    )}
                   </label>
                   <select
                     value={travelClass}
                     onChange={(e) => setTravelClass(e.target.value)}
-                    className="block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 h-10 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary"
+                    disabled={selectedSeats.length > 0}
+                    className={`block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 h-10 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary ${
+                      selectedSeats.length > 0 ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   >
                     {CABIN_CLASSES.map((cabin) => (
                       <option key={cabin.value} value={cabin.value}>
@@ -823,14 +910,14 @@ const Booking = ({ isLoggedIn }) => {
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
                       currentLeg === index
                         ? 'bg-primary text-white'
-                        : legTicketId[index]
+                        : legTicketIds[index]
                         ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                         : legSelectedFlightId[index]
                         ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                         : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                     }`}
                   >
-                    {legTicketId[index] ? (
+                    {legTicketIds[index] ? (
                       <Check className="w-4 h-4" />
                     ) : legSelectedFlightId[index] ? (
                       <Plane className="w-4 h-4" />
@@ -850,14 +937,14 @@ const Booking = ({ isLoggedIn }) => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
                   roundTripPhase === 'outbound'
                     ? 'bg-primary text-white'
-                    : ticketId
+                    : ticketIds.length > 0
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                     : selectedFlightId
                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                 }`}
               >
-                {ticketId ? (
+                {ticketIds.length > 0 ? (
                   <Check className="w-4 h-4" />
                 ) : selectedFlightId ? (
                   <Plane className="w-4 h-4" />
@@ -870,14 +957,14 @@ const Booking = ({ isLoggedIn }) => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
                   roundTripPhase === 'return'
                     ? 'bg-primary text-white'
-                    : returnTicketId
+                    : returnTicketIds.length > 0
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
                     : selectedReturnFlightId
                     ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                 }`}
               >
-                {returnTicketId ? (
+                {returnTicketIds.length > 0 ? (
                   <Check className="w-4 h-4" />
                 ) : selectedReturnFlightId ? (
                   <Plane className="w-4 h-4" />
@@ -1199,22 +1286,29 @@ const Booking = ({ isLoggedIn }) => {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <Card className="mt-8" padding="md">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div className="mb-4">
                       <Input
                         label="Food Preference"
                         placeholder="e.g., Vegetarian, Vegan"
                         value={foodPreference}
                         onChange={(e) => setFoodPreference(e.target.value)}
                       />
-                      <Input
-                        label="Preferred Seat Number"
-                        placeholder="e.g., 12A"
-                        value={seatNo}
-                        onChange={(e) => setSeatNo(e.target.value)}
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Select Your Seat
+                      </label>
+                      <SeatMap
+                        flightId={selectedFlightId}
+                        selectedSeats={selectedSeats}
+                        onSeatsChange={handleSeatsChange}
+                        allowedClass={travelClass}
+                        maxSeats={Number(passengerNo) || 1}
+                        basePrice={availableFlights.find(f => f.flight_id === selectedFlightId)?.price || 0}
                       />
                     </div>
                     <div className="flex flex-col md:flex-row gap-3 justify-end">
-                      {ticketId && (
+                      {ticketIds.length > 0 && (
                         <Button variant="danger" onClick={handleCancel}>
                           Cancel Booking
                         </Button>
@@ -1248,13 +1342,13 @@ const Booking = ({ isLoggedIn }) => {
                       <div
                         key={index}
                         className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 rounded-lg border ${
-                          legTicketId[index]
+                          legTicketIds[index]
                             ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
                             : 'border-gray-200 dark:border-gray-700'
                         }`}
                       >
                         <div className="flex flex-wrap items-center gap-3">
-                          <Badge variant={legTicketId[index] ? 'success' : 'primary'}>
+                          <Badge variant={legTicketIds[index] ? 'success' : 'primary'}>
                             Leg {index + 1}
                           </Badge>
                           <span className="font-medium">
@@ -1271,16 +1365,16 @@ const Booking = ({ isLoggedIn }) => {
                           {flight && (
                             <span className="font-bold text-primary">{formatPrice(flight.price)}</span>
                           )}
-                          {legTicketId[index] ? (
+                          {legTicketIds[index] ? (
                             <Badge variant="success">
                               <Check className="inline w-3 h-3 mr-1" />
-                              Ticket #{legTicketId[index]}
+                              Tickets {legTicketIds[index].map(id => '#' + id).join(', ')}
                             </Badge>
                           ) : (
                             <Button
                               size="sm"
                               onClick={() => handleMultiCityBookingInitiate(index)}
-                              disabled={index > 0 && !legTicketId[index - 1]}
+                              disabled={index > 0 && !legTicketIds[index - 1]}
                             >
                               Book Leg {index + 1}
                             </Button>
@@ -1291,18 +1385,25 @@ const Booking = ({ isLoggedIn }) => {
                   })}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="mb-4">
                   <Input
                     label="Food Preference"
                     placeholder="e.g., Vegetarian, Vegan"
                     value={foodPreference}
                     onChange={(e) => setFoodPreference(e.target.value)}
                   />
-                  <Input
-                    label="Preferred Seat Number"
-                    placeholder="e.g., 12A"
-                    value={seatNo}
-                    onChange={(e) => setSeatNo(e.target.value)}
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Your Seat
+                  </label>
+                  <SeatMap
+                    flightId={legSelectedFlightId[activeLegIndex]}
+                    selectedSeats={selectedSeats}
+                    onSeatsChange={handleSeatsChange}
+                    allowedClass={travelClass}
+                    maxSeats={Number(passengerNo) || 1}
+                    basePrice={activeLegFlight?.price || 0}
                   />
                 </div>
 
@@ -1313,7 +1414,7 @@ const Booking = ({ isLoggedIn }) => {
                       All Legs Booked Successfully!
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Ticket IDs: {legs.map((_, i) => `#${legTicketId[i]}`).join(', ')}
+                      Ticket IDs: {legs.flatMap((_, i) => legTicketIds[i] || []).map(id => `#${id}`).join(', ')}
                     </p>
                   </div>
                 )}
@@ -1333,12 +1434,12 @@ const Booking = ({ isLoggedIn }) => {
                 <div className="space-y-3 mb-6">
                   {/* Outbound */}
                   <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 rounded-lg border ${
-                    ticketId
+                    ticketIds.length > 0
                       ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
                       : 'border-gray-200 dark:border-gray-700'
                   }`}>
                     <div className="flex flex-wrap items-center gap-3">
-                      <Badge variant={ticketId ? 'success' : 'primary'}>Outbound</Badge>
+                      <Badge variant={ticketIds.length > 0 ? 'success' : 'primary'}>Outbound</Badge>
                       <span className="font-medium">{source} &rarr; {destination}</span>
                       <span className="text-sm text-gray-500 dark:text-gray-400">{departureDate}</span>
                       {outboundFlight && (
@@ -1349,10 +1450,10 @@ const Booking = ({ isLoggedIn }) => {
                       {outboundFlight && (
                         <span className="font-bold text-primary">{formatPrice(outboundFlight.price)}</span>
                       )}
-                      {ticketId ? (
+                      {ticketIds.length > 0 ? (
                         <Badge variant="success">
                           <Check className="inline w-3 h-3 mr-1" />
-                          Ticket #{ticketId}
+                          Tickets {ticketIds.map(id => '#' + id).join(', ')}
                         </Badge>
                       ) : (
                         <Button
@@ -1367,12 +1468,12 @@ const Booking = ({ isLoggedIn }) => {
 
                   {/* Return */}
                   <div className={`flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 rounded-lg border ${
-                    returnTicketId
+                    returnTicketIds.length > 0
                       ? 'border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20'
                       : 'border-gray-200 dark:border-gray-700'
                   }`}>
                     <div className="flex flex-wrap items-center gap-3">
-                      <Badge variant={returnTicketId ? 'success' : 'primary'}>Return</Badge>
+                      <Badge variant={returnTicketIds.length > 0 ? 'success' : 'primary'}>Return</Badge>
                       <span className="font-medium">{destination} &rarr; {source}</span>
                       <span className="text-sm text-gray-500 dark:text-gray-400">{returnDate}</span>
                       {returnSelectedFlight && (
@@ -1383,16 +1484,16 @@ const Booking = ({ isLoggedIn }) => {
                       {returnSelectedFlight && (
                         <span className="font-bold text-primary">{formatPrice(returnSelectedFlight.price)}</span>
                       )}
-                      {returnTicketId ? (
+                      {returnTicketIds.length > 0 ? (
                         <Badge variant="success">
                           <Check className="inline w-3 h-3 mr-1" />
-                          Ticket #{returnTicketId}
+                          Tickets {returnTicketIds.map(id => '#' + id).join(', ')}
                         </Badge>
                       ) : (
                         <Button
                           size="sm"
                           onClick={() => handleRoundTripBookingInitiate('return')}
-                          disabled={!ticketId}
+                          disabled={ticketIds.length === 0}
                         >
                           Book Return
                         </Button>
@@ -1407,18 +1508,30 @@ const Booking = ({ isLoggedIn }) => {
                   <span className="text-2xl font-bold text-primary">{formatPrice(roundTripTotalPrice)}</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="mb-4">
                   <Input
                     label="Food Preference"
                     placeholder="e.g., Vegetarian, Vegan"
                     value={foodPreference}
                     onChange={(e) => setFoodPreference(e.target.value)}
                   />
-                  <Input
-                    label="Preferred Seat Number"
-                    placeholder="e.g., 12A"
-                    value={seatNo}
-                    onChange={(e) => setSeatNo(e.target.value)}
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Your Seat
+                  </label>
+                  <SeatMap
+                    flightId={ticketIds.length === 0 ? selectedFlightId : selectedReturnFlightId}
+                    selectedSeats={selectedSeats}
+                    onSeatsChange={handleSeatsChange}
+                    allowedClass={travelClass}
+                    maxSeats={Number(passengerNo) || 1}
+                    basePrice={(() => {
+                      if (ticketIds.length === 0) {
+                        return outboundFlight?.price || 0;
+                      }
+                      return returnSelectedFlight?.price || 0;
+                    })()}
                   />
                 </div>
 
@@ -1429,7 +1542,7 @@ const Booking = ({ isLoggedIn }) => {
                       Round-Trip Booked Successfully!
                     </h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      Outbound Ticket: #{ticketId} | Return Ticket: #{returnTicketId}
+                      Outbound Tickets: {ticketIds.map(id => '#' + id).join(', ')} | Return Tickets: {returnTicketIds.map(id => '#' + id).join(', ')}
                     </p>
                   </div>
                 )}
