@@ -5,6 +5,7 @@ import { Card, Button, Input, Badge } from '../components/ui';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
 import { getAuthHeaders } from '../utils/auth';
 import { formatPrice } from '../utils/formatters';
+import { formatTime } from '../utils/dateTime';
 
 const EMPTY_FORM = {
   flight_id: '',
@@ -71,8 +72,8 @@ function AdminPage() {
       status: flight.status || 'scheduled',
       source: flight.source || '',
       destination: flight.destination || '',
-      departure: flight.departure ? flight.departure.slice(0, 5) : '',
-      arrival: flight.arrival ? flight.arrival.slice(0, 5) : '',
+      departure: formatTime(flight.departure, ''),
+      arrival: formatTime(flight.arrival, ''),
       available_seats: flight.available_seats ?? '',
       price: flight.price ?? '',
       date: flight.date ? new Date(flight.date).toISOString().split('T')[0] : '',
@@ -423,7 +424,7 @@ function AdminPage() {
                         <td className="py-3 px-3">{flight.source} &rarr; {flight.destination}</td>
                         <td className="py-3 px-3">{flight.date ? new Date(flight.date).toLocaleDateString() : 'N/A'}</td>
                         <td className="py-3 px-3">
-                          {flight.departure ? flight.departure.slice(0, 5) : '—'} - {flight.arrival ? flight.arrival.slice(0, 5) : '—'}
+                          {formatTime(flight.departure, '—')} - {formatTime(flight.arrival, '—')}
                         </td>
                         <td className="py-3 px-3">{flight.available_seats}</td>
                         <td className="py-3 px-3 font-semibold text-primary">{formatPrice(flight.price)}</td>

@@ -17,6 +17,14 @@ export const CURRENCIES = [
   { value: 'GBP', label: 'GBP' }
 ];
 
+export const FLIGHT_STATUSES = {
+  scheduled: { label: 'Scheduled', variant: 'info' },
+  air: { label: 'In Air', variant: 'success' },
+  canceled: { label: 'Canceled', variant: 'danger' },
+  landed: { label: 'Landed', variant: 'default' },
+  delayed: { label: 'Delayed', variant: 'warning' },
+};
+
 export const CONTACT_SUBJECTS = [
   { value: 'booking', label: 'Booking Inquiry' },
   { value: 'support', label: 'Customer Support' },

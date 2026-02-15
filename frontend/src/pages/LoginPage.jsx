@@ -149,7 +149,7 @@ function LoginForm({ onLoginSuccess }) {
                 />
                 <span className="text-gray-600 dark:text-gray-400">Remember me</span>
               </label>
-              <Link to="/ForgotPassword" className="text-primary hover:text-primary-hover font-medium">
+              <Link to="/forgot-password" className="text-primary hover:text-primary-hover font-medium">
                 Forgot password?
               </Link>
             </div>
@@ -162,7 +162,7 @@ function LoginForm({ onLoginSuccess }) {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
-              <Link to="/SignUp" className="text-primary hover:text-primary-hover font-medium">
+              <Link to="/sign-up" className="text-primary hover:text-primary-hover font-medium">
                 Sign up
               </Link>
             </p>

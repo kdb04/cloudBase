@@ -40,14 +40,15 @@ const Navbar = () => {
       }
     }
     removeAuthToken();
-    navigate('/Login');
+    navigate('/login');
     window.location.reload();
   };
 
   const navLinks = [
     { path: '/', label: 'Home' },
-    { path: '/Booking', label: 'Book Flights' },
-    { path: '/About', label: 'About' },
+    { path: '/booking', label: 'Book Flights' },
+    { path: '/flight-status', label: 'Flight Status' },
+    { path: '/about', label: 'About' },
     { path: '/contact', label: 'Contact' },
   ];
 
@@ -125,7 +126,7 @@ const Navbar = () => {
               </button>
             ) : (
               <Link
-                to="/Login"
+                to="/login"
                 className="flex items-center space-x-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
               >
                 <User className="w-4 h-4" />
@@ -178,7 +179,7 @@ const Navbar = () => {
                   </button>
                 ) : (
                   <Link
-                    to="/Login"
+                    to="/login"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center space-x-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-md"
                   >

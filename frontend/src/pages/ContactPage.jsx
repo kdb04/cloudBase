@@ -41,7 +41,7 @@ const ContactPage = () => {
     setSuccess(null);
 
     if (!hasAuthToken()) {
-      navigate('/Login');
+      navigate('/login');
       return;
     }
 

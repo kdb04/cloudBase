@@ -23,10 +23,10 @@ import { PaymentModal } from '../components/ui/PaymentModal';
 import { fadeInUp, staggerContainer } from '../utils/animations';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
 import { getAuthToken, getAuthHeaders } from '../utils/auth';
-import { getFormattedFlightDuration } from '../utils/dateTime';
+import { getFormattedFlightDuration, formatTime } from '../utils/dateTime';
 import { sortFlights, filterFlights } from '../utils/filters';
 import { formatPrice } from '../utils/formatters';
-import { TRIP_TYPES, CABIN_CLASSES } from '../utils/constants';
+import { TRIP_TYPES, CABIN_CLASSES, FLIGHT_STATUSES } from '../utils/constants';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
@@ -98,7 +98,7 @@ const Booking = ({ isLoggedIn }) => {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      navigate('/Login');
+      navigate('/login');
     }
   }, [isLoggedIn, navigate]);
 
@@ -1076,6 +1076,11 @@ const Booking = ({ isLoggedIn }) => {
                                 <Badge variant="primary" className="mb-2">
                                   Flight {flight.flight_id}
                                 </Badge>
+                                {flight.status && FLIGHT_STATUSES[flight.status] && (
+                                  <Badge variant={FLIGHT_STATUSES[flight.status].variant} className="ml-2 mb-2">
+                                    {FLIGHT_STATUSES[flight.status].label}
+                                  </Badge>
+                                )}
                                 {sortBy === 'recommended' && (
                                   <Badge variant="secondary" className="ml-2">
                                     Recommended
@@ -1091,7 +1096,7 @@ const Booking = ({ isLoggedIn }) => {
 
                             <div className="flex items-center space-x-4">
                               <div className="text-center">
-                                <div className="text-2xl font-bold">{flight.departure ? flight.departure.slice(0, 5) : '08:00'}</div>
+                                <div className="text-2xl font-bold">{formatTime(flight.departure, '08:00')}</div>
                                 <div className="text-sm text-gray-600 dark:text-gray-400 uppercase font-semibold">
                                   {flight.source}
                                 </div>
@@ -1114,7 +1119,7 @@ const Booking = ({ isLoggedIn }) => {
                               </div>
 
                               <div className="text-center">
-                                <div className="text-2xl font-bold">{flight.arrival ? flight.arrival.slice(0, 5) : '10:30'}</div>
+                                <div className="text-2xl font-bold">{formatTime(flight.arrival, '10:30')}</div>
                                 <div className="text-sm text-gray-600 dark:text-gray-400 uppercase font-semibold">
                                   {flight.destination}
                                 </div>

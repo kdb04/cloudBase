@@ -7,3 +7,4 @@ export { default as SignUpPage } from './SignUpPage';
 export { default as ForgotPasswordPage } from './ForgotPasswordPage';
 export { default as ContactPage } from './ContactPage';
 export { default as AdminPage } from './AdminPage';
+export { default as FlightStatusPage } from './FlightStatusPage';

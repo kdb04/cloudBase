@@ -191,7 +191,7 @@ const About = () => {
                   Contact Us
                 </a>
                 <a
-                  href="/Booking"
+                  href="/booking"
                   className="inline-flex items-center justify-center px-6 py-3 border-2 border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors font-semibold"
                 >
                   Book a Flight

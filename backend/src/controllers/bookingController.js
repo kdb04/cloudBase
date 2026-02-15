@@ -100,10 +100,26 @@ const sendBookingConfirmation = (email, ticket) => {
 const bookTicket = (req, res) => {
     const { passenger_no, class: travelClass, food_preference,  source, destination, seat_no, flight_id, transaction_id } = req.body;
     console.log(`[BOOKING] Creating ticket - Flight: ${flight_id}, Passenger: ${passenger_no}, Route: ${source} -> ${destination}`);
-    const status = transaction_id ? 'Paid' : 'Pending';
+
+    // Check flight status before booking
+    db.query("SELECT status FROM Flights WHERE flight_id = ?", [flight_id], (statusErr, statusResults) => {
+        if (statusErr) {
+            console.log(`[BOOKING] FAILED - Error checking flight status: ${statusErr.message}`);
+            return res.status(500).json({ message: "Error checking flight status", error: statusErr });
+        }
+        if (statusResults.length === 0) {
+            console.log(`[BOOKING] FAILED - Flight ${flight_id} not found`);
+            return res.status(404).json({ message: "Flight not found" });
+        }
+        if (statusResults[0].status !== 'scheduled') {
+            console.log(`[BOOKING] FAILED - Flight ${flight_id} is not available for booking (status: ${statusResults[0].status})`);
+            return res.status(400).json({ message: `Flight is currently ${statusResults[0].status} and cannot be booked` });
+        }
+
+    const paymentStatus = transaction_id ? 'Paid' : 'Pending';
     const query = "INSERT INTO ticket (passenger_no, class, food_preference, source, destination, seat_no, flight_id, transaction_id, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id, transaction_id, status], (err, results) => {
+    db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id, transaction_id, paymentStatus], (err, results) => {
         if (err){
             console.log(`[BOOKING] FAILED - Error booking flight ${flight_id}: ${err.message}`);
             return res.status(500).json({ message: "Error booking flight", error: err});
@@ -130,13 +146,14 @@ const bookTicket = (req, res) => {
                 class: travelClass,
                 seat_no: seat_no,
                 food_preference,
-                payment_status: status,
+                payment_status: paymentStatus,
                 transaction_id
             });
         });
 
         console.log(`[BOOKING] SUCCESS - Ticket ID: ${results.insertId} created for flight ${flight_id}`);
         return res.status(201).json({ message: "Flight booked successfully", ticket_id : results.insertId });
+    });
     });
 };
 
@@ -287,7 +304,7 @@ const getAvailableFlights = (req, res) => {
     const { source, destination, date, min_price, max_price } = req.query;
     console.log(`[READ] Searching flights: ${source} -> ${destination}${date ? ` on ${date}` : ''}`);
 
-    let query = "SELECT flight_id, airline_id, source, destination, available_seats, price, arrival, departure, date FROM Flights WHERE source = ? AND destination = ?";
+    let query = "SELECT flight_id, airline_id, source, destination, available_seats, price, arrival, departure, date, status FROM Flights WHERE source = ? AND destination = ? AND status != 'canceled'";
     const params = [source, destination];
 
     if (date) {
@@ -333,4 +350,24 @@ const getAlternateFlights = (req, res) => {
     });
 };
 
-module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights };
+const getFlightStatus = (req, res) => {
+    const { flight_id } = req.params;
+    console.log(`[STATUS] Looking up flight status for flight: ${flight_id}`);
+
+    const query = "SELECT f.*, a.airline_name FROM Flights f LEFT JOIN airlines a ON f.airline_id = a.airline_id WHERE f.flight_id = ?";
+
+    db.query(query, [flight_id], (err, results) => {
+        if (err) {
+            console.log(`[STATUS] FAILED - Error fetching flight status: ${err.message}`);
+            return res.status(500).json({ message: "Error fetching flight status", error: err });
+        }
+        if (results.length === 0) {
+            console.log(`[STATUS] NOT FOUND - Flight ID: ${flight_id}`);
+            return res.status(404).json({ message: "Flight not found" });
+        }
+        console.log(`[STATUS] Found flight ${flight_id} - Status: ${results[0].status}`);
+        return res.status(200).json({ flight: results[0] });
+    });
+};
+
+module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus };

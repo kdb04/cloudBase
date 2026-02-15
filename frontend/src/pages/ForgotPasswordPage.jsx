@@ -21,7 +21,7 @@ function ForgotPasswordPage() {
 
   useEffect(() => {
     if (resendCooldown > 0) {
-      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      const timer = setTimeout(() => setResendCooldown(prev => prev - 1), 1000);
       return () => clearTimeout(timer);
     }
   }, [resendCooldown]);
@@ -116,7 +116,7 @@ function ForgotPasswordPage() {
       await handleApiResponse(response);
 
       setSuccess('Password reset successfully! Redirecting to login...');
-      setTimeout(() => navigate('/Login'), 2000);
+      setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -285,7 +285,7 @@ function ForgotPasswordPage() {
 
           <div className="mt-6 text-center">
             <Link
-              to="/Login"
+              to="/login"
               className="inline-flex items-center text-sm text-primary hover:text-primary-hover font-medium"
             >
               <ArrowLeft className="mr-2 w-3 h-3" />

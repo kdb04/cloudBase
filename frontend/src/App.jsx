@@ -9,7 +9,8 @@ import {
   BookingPage,
   AboutPage,
   ContactPage,
-  AdminPage
+  AdminPage,
+  FlightStatusPage
 } from './pages';
 import { getUserRole } from './utils/auth';
 
@@ -28,11 +29,12 @@ function App() {
         <div className="App">
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/Login" element={<LoginPage onLoginSuccess={handleLogin} />} />
-            <Route path="/SignUp" element={<SignUpPage onLoginSuccess={handleLogin} />} />
-            <Route path="/ForgotPassword" element={<ForgotPasswordPage />} />
-            <Route path="/Booking" element={<BookingPage isLoggedIn={isLoggedIn} />} />
-            <Route path="/About" element={<AboutPage />} />
+            <Route path="/login" element={<LoginPage onLoginSuccess={handleLogin} />} />
+            <Route path="/sign-up" element={<SignUpPage onLoginSuccess={handleLogin} />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/booking" element={<BookingPage isLoggedIn={isLoggedIn} />} />
+            <Route path="/flight-status" element={<FlightStatusPage />} />
+            <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route
               path="/admin"
@@ -40,7 +42,7 @@ function App() {
                 isLoggedIn && userRole === 'admin' ? (
                   <AdminPage />
                 ) : (
-                  <Navigate to="/Login" replace />
+                  <Navigate to="/login" replace />
                 )
               }
             />

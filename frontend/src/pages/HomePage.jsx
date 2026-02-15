@@ -92,13 +92,13 @@ const HomePage = () => {
               Experience seamless travel with our cutting-edge flight booking and management system
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/Booking">
+              <Link to="/booking">
                 <Button size="lg" variant="secondary" className="w-full sm:w-auto">
                   <Plane className="mr-2 w-5 h-5" />
                   Book a Flight
                 </Button>
               </Link>
-              <Link to="/About">
+              <Link to="/about">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
                   Learn More
                 </Button>
@@ -274,7 +274,7 @@ const HomePage = () => {
                   Search and compare flights from hundreds of airlines
                 </p>
               </div>
-              <Link to="/Booking">
+              <Link to="/booking">
                 <Button size="lg">
                   <Plane className="mr-2 w-5 h-5" />
                   Start Booking
