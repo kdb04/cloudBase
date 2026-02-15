@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, KeyRound, ArrowLeft } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
+import { handleApiResponse } from '../utils/errorHandling';
 import { validateEmail, validatePassword } from '../utils/validators';
 
 function ForgotPasswordPage() {
@@ -15,10 +16,17 @@ function ForgotPasswordPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const navigate = useNavigate();
 
-  const handleSendOTP = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
+  const sendOTP = async () => {
     setError(null);
 
     if (!validateEmail(email)) {
@@ -35,19 +43,21 @@ function ForgotPasswordPage() {
         body: JSON.stringify({ email }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      await handleApiResponse(response);
 
       setSuccess('OTP sent to your email');
       setStep(2);
+      setResendCooldown(60);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSendOTP = async (e) => {
+    e.preventDefault();
+    await sendOTP();
   };
 
   const handleVerifyOTP = async (e) => {
@@ -68,11 +78,7 @@ function ForgotPasswordPage() {
         body: JSON.stringify({ email, otp }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      await handleApiResponse(response);
 
       setSuccess('OTP verified successfully');
       setStep(3);
@@ -107,11 +113,7 @@ function ForgotPasswordPage() {
         body: JSON.stringify({ email, otp, newPassword }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      await handleApiResponse(response);
 
       setSuccess('Password reset successfully! Redirecting to login...');
       setTimeout(() => navigate('/Login'), 2000);
@@ -169,11 +171,11 @@ function ForgotPasswordPage() {
             </Button>
             <button
               type="button"
-              onClick={() => handleSendOTP({ preventDefault: () => {} })}
-              className="w-full text-sm text-primary hover:text-primary-hover"
-              disabled={loading}
+              onClick={sendOTP}
+              className="w-full text-sm text-primary hover:text-primary-hover disabled:text-gray-400 disabled:cursor-not-allowed"
+              disabled={loading || resendCooldown > 0}
             >
-              Resend OTP
+              {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
             </button>
           </form>
         );

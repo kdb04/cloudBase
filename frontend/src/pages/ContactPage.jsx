@@ -8,6 +8,7 @@ import { fadeInUp, staggerContainer } from '../utils/animations';
 import { CONTACT_SUBJECTS } from '../utils/constants';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
 import { hasAuthToken } from '../utils/auth';
+import { handleApiResponse } from '../utils/errorHandling';
 
 const ContactPage = () => {
   const navigate = useNavigate();
@@ -70,15 +71,10 @@ const ContactPage = () => {
         }),
       });
 
-      const data = await response.json();
+      const data = await handleApiResponse(response);
 
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
-
-      setSuccess(data.message);
       clearForm();
-      setSuccess(data.message); // Re-set success after clearForm
+      setSuccess(data.message);
     } catch (err) {
       setError(err.message);
     } finally {

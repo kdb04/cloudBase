@@ -3,6 +3,7 @@ export * from './api';
 export * from './auth';
 export * from './constants';
 export * from './dateTime';
+export * from './errorHandling';
 export * from './filters';
 export * from './formatters';
 export * from './validators';

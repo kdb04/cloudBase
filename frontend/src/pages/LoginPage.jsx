@@ -5,6 +5,7 @@ import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
 import { setAuthToken, isAdminUser } from '../utils/auth';
+import { handleApiResponse } from '../utils/errorHandling';
 import { validateEmail, validatePassword } from '../utils/validators';
 
 function LoginForm({ onLoginSuccess }) {
@@ -61,11 +62,7 @@ function LoginForm({ onLoginSuccess }) {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message);
-      }
+      const data = await handleApiResponse(response);
 
       setSuccess(data.message);
       setError(null);

@@ -83,7 +83,18 @@ const Booking = ({ isLoggedIn }) => {
   const [legSearchPerformed, setLegSearchPerformed] = useState([false, false, false]);
   const [bookingLegIndex, setBookingLegIndex] = useState(null);
 
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
   const navigate = useNavigate();
+
+  // Auto-dismiss success messages after 5 seconds
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => setSuccess(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -182,10 +193,13 @@ const Booking = ({ isLoggedIn }) => {
   };
 
   const handleSearch = async () => {
+    setError(null);
+    setSuccess(null);
     if (isMultiCity) {
       const leg = legs[currentLeg];
       if (!leg.source || !leg.destination) {
-        return alert(`Please enter source and destination for Leg ${currentLeg + 1}`);
+        setError(`Please enter source and destination for Leg ${currentLeg + 1}`);
+        return;
       }
 
       try {
@@ -221,7 +235,12 @@ const Booking = ({ isLoggedIn }) => {
 
     if (isRoundTrip) {
       if (!departureDate || !returnDate) {
-        return alert('Please select both departure and return dates');
+        setError('Please select both departure and return dates');
+        return;
+      }
+      if (new Date(returnDate) < new Date(departureDate)) {
+        setError('Return date must be on or after the departure date');
+        return;
       }
 
       try {
@@ -282,14 +301,18 @@ const Booking = ({ isLoggedIn }) => {
 
   // --- Booking ---
   const handleBookingInitiate = async () => {
+    setError(null);
+    setSuccess(null);
     if (!selectedFlightId) {
-      return alert('Please select a flight');
+      setError('Please select a flight');
+      return;
     }
 
     try {
       const token = getAuthToken();
       if (!token) {
-         return alert("You must be logged in to book.");
+         setError('You must be logged in to book.');
+         return;
       }
 
       const response = await fetch(getApiUrl(ENDPOINTS.CREATE_INTENT), {
@@ -309,19 +332,27 @@ const Booking = ({ isLoggedIn }) => {
       setPaymentAmount(data.amount);
       setShowPaymentModal(true);
 
-    } catch (error) {
-      console.error('Error initiating booking:', error);
-      alert('Failed to initiate booking. Please try again.');
+    } catch (err) {
+      console.error('Error initiating booking:', err);
+      setError('Failed to initiate booking. Please try again.');
     }
   };
 
   const handleMultiCityBookingInitiate = async (legIndex) => {
+    setError(null);
+    setSuccess(null);
     const flightId = legSelectedFlightId[legIndex];
-    if (!flightId) return alert(`No flight selected for Leg ${legIndex + 1}`);
+    if (!flightId) {
+      setError(`No flight selected for Leg ${legIndex + 1}`);
+      return;
+    }
 
     try {
       const token = getAuthToken();
-      if (!token) return alert("You must be logged in to book.");
+      if (!token) {
+        setError('You must be logged in to book.');
+        return;
+      }
 
       setBookingLegIndex(legIndex);
 
@@ -340,20 +371,28 @@ const Booking = ({ isLoggedIn }) => {
       setClientSecret(data.clientSecret);
       setPaymentAmount(data.amount);
       setShowPaymentModal(true);
-    } catch (error) {
-      console.error('Error initiating booking:', error);
+    } catch (err) {
+      console.error('Error initiating booking:', err);
       setBookingLegIndex(null);
-      alert('Failed to initiate booking. Please try again.');
+      setError('Failed to initiate booking. Please try again.');
     }
   };
 
   const handleRoundTripBookingInitiate = async (leg) => {
+    setError(null);
+    setSuccess(null);
     const flightId = leg === 'outbound' ? selectedFlightId : selectedReturnFlightId;
-    if (!flightId) return alert(`No flight selected for ${leg} trip`);
+    if (!flightId) {
+      setError(`No flight selected for ${leg} trip`);
+      return;
+    }
 
     try {
       const token = getAuthToken();
-      if (!token) return alert("You must be logged in to book.");
+      if (!token) {
+        setError('You must be logged in to book.');
+        return;
+      }
 
       setBookingRoundTripLeg(leg);
 
@@ -372,10 +411,10 @@ const Booking = ({ isLoggedIn }) => {
       setClientSecret(data.clientSecret);
       setPaymentAmount(data.amount);
       setShowPaymentModal(true);
-    } catch (error) {
-      console.error('Error initiating booking:', error);
+    } catch (err) {
+      console.error('Error initiating booking:', err);
       setBookingRoundTripLeg(null);
-      alert('Failed to initiate booking. Please try again.');
+      setError('Failed to initiate booking. Please try again.');
     }
   };
 
@@ -411,11 +450,11 @@ const Booking = ({ isLoggedIn }) => {
           return next;
         });
         setBookingLegIndex(null);
-        alert(`Leg ${legIndex + 1} booked successfully! Ticket ID: ${result.ticket_id}`);
-      } catch (error) {
-        console.error('Error during booking:', error);
+        setSuccess(`Leg ${legIndex + 1} booked successfully! Ticket ID: ${result.ticket_id}`);
+      } catch (err) {
+        console.error('Error during booking:', err);
         setBookingLegIndex(null);
-        alert('Payment succeeded but booking failed. Please contact support.');
+        setError('Payment succeeded but booking failed. Please contact support.');
       }
       return;
     }
@@ -449,11 +488,11 @@ const Booking = ({ isLoggedIn }) => {
           setTicketId(result.ticket_id);
         }
         setBookingRoundTripLeg(null);
-        alert(`${isReturn ? 'Return' : 'Outbound'} flight booked! Ticket ID: ${result.ticket_id}`);
-      } catch (error) {
-        console.error('Error during booking:', error);
+        setSuccess(`${isReturn ? 'Return' : 'Outbound'} flight booked! Ticket ID: ${result.ticket_id}`);
+      } catch (err) {
+        console.error('Error during booking:', err);
         setBookingRoundTripLeg(null);
-        alert('Payment succeeded but booking failed. Please contact support.');
+        setError('Payment succeeded but booking failed. Please contact support.');
       }
       return;
     }
@@ -482,10 +521,10 @@ const Booking = ({ isLoggedIn }) => {
       const result = await response.json();
       console.log('Booking successful:', result);
       setTicketId(result.ticket_id);
-      alert('Booking successful! Ticket ID: ' + result.ticket_id);
-    } catch (error) {
-      console.error('Error during booking:', error);
-      alert('Payment succeeded but booking failed. Please contact support.');
+      setSuccess(`Booking successful! Ticket ID: ${result.ticket_id}`);
+    } catch (err) {
+      console.error('Error during booking:', err);
+      setError('Payment succeeded but booking failed. Please contact support.');
     }
   };
 
@@ -519,10 +558,10 @@ const Booking = ({ isLoggedIn }) => {
         : result.refund_status === 'failed'
         ? 'Refund could not be processed. Please contact support.'
         : '';
-      alert(`Booking cancelled successfully.${refundMsg ? ' ' + refundMsg : ''}`);
-    } catch (error) {
-      console.error('Error during cancellation:', error);
-      alert('Cancellation failed. Please try again.');
+      setSuccess(`Booking cancelled successfully.${refundMsg ? ' ' + refundMsg : ''}`);
+    } catch (err) {
+      console.error('Error during cancellation:', err);
+      setError('Cancellation failed. Please try again.');
     }
   };
 
@@ -540,7 +579,7 @@ const Booking = ({ isLoggedIn }) => {
       setAlternateFlights(result.alternateFlights || []);
     } catch (error) {
       console.error('Error fetching alternate flights:', error);
-      alert('Failed to find alternate flights');
+      setError('Failed to find alternate flights');
     }
   };
 
@@ -744,6 +783,31 @@ const Booking = ({ isLoggedIn }) => {
               </div>
             </Card>
           </motion.div>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex justify-between items-center"
+            >
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 ml-4">
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex justify-between items-center"
+            >
+              <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
+              <button onClick={() => setSuccess(null)} className="text-green-400 hover:text-green-600 ml-4">
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
 
           {/* Multi-city leg stepper */}
           {isMultiCity && (legSearchPerformed.some(Boolean) || legSelectedFlightId.some(id => id !== null)) && (
