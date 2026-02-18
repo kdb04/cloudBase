@@ -24,18 +24,8 @@ export const sortFlights = (flights, sortBy = 'recommended') => {
   }
 };
 
-export const filterFlights = (flights, { stops = {}, minPrice = '', maxPrice = '', directOnly = false }) => {
+export const filterFlights = (flights, { minPrice = '', maxPrice = '' } = {}) => {
   let filtered = flights;
-
-  // Stops filter: all current flights are direct (0 stops).
-  // If any checkbox is checked, apply the filter. If none are checked, skip (show all).
-  const anyStopChecked = stops.direct || stops.oneStop || stops.twoPlus || directOnly;
-  if (anyStopChecked) {
-    filtered = filtered.filter(() => {
-      // All flights are direct (0 stops), so only "direct" or "directOnly" matches
-      return stops.direct || directOnly;
-    });
-  }
 
   // Price range filter (client-side, supplements backend filtering)
   const min = minPrice !== '' ? Number(minPrice) : null;

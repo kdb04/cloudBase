@@ -35,7 +35,7 @@ const Booking = ({ isLoggedIn }) => {
   const [tripType, setTripType] = useState('roundtrip');
   const [travelClass, setTravelClass] = useState('economy');
   const [passengerNo, setPassengerNo] = useState(1);
-  const [directOnly, setDirectOnly] = useState(false);
+
 
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
@@ -52,7 +52,7 @@ const Booking = ({ isLoggedIn }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
-  const [stops, setStops] = useState({ direct: false, oneStop: false, twoPlus: false });
+
 
   const [showRerouteModal, setShowRerouteModal] = useState(false);
   const [cancelledFlightId, setCancelledFlightId] = useState('');
@@ -661,7 +661,7 @@ const Booking = ({ isLoggedIn }) => {
   };
 
   const getFilteredAndSortedFlights = () => {
-    const filtered = filterFlights(currentFlights, { stops, minPrice, maxPrice, directOnly });
+    const filtered = filterFlights(currentFlights, { minPrice, maxPrice });
     return sortFlights(filtered, sortBy);
   };
 
@@ -820,7 +820,7 @@ const Booking = ({ isLoggedIn }) => {
                   />
                 </div>
 
-                <div className="md:col-span-1">
+                <div className="md:col-span-1 relative">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Cabin Class
                     {selectedSeats.length > 0 && (
@@ -831,7 +831,7 @@ const Booking = ({ isLoggedIn }) => {
                     value={travelClass}
                     onChange={(e) => setTravelClass(e.target.value)}
                     disabled={selectedSeats.length > 0}
-                    className={`block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 h-10 px-3 py-2 focus:ring-2 focus:ring-primary focus:border-primary ${
+                    className={`block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 h-10 px-3 pr-8 py-2 focus:ring-2 focus:ring-primary focus:border-primary ${
                       selectedSeats.length > 0 ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -843,19 +843,6 @@ const Booking = ({ isLoggedIn }) => {
                   </select>
                 </div>
 
-                <div className="md:col-span-1 flex items-center pt-6">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={directOnly}
-                      onChange={(e) => setDirectOnly(e.target.checked)}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                    />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Direct flights only
-                    </span>
-                  </label>
-                </div>
               </div>
 
               <div className="flex justify-end items-center gap-3">
@@ -1055,7 +1042,6 @@ const Booking = ({ isLoggedIn }) => {
                       <h3 className="font-semibold text-lg">Filters</h3>
                       <button
                         onClick={() => {
-                          setStops({ direct: false, oneStop: false, twoPlus: false });
                           setMinPrice('');
                           setMaxPrice('');
                         }}
@@ -1063,39 +1049,6 @@ const Booking = ({ isLoggedIn }) => {
                       >
                         Clear all
                       </button>
-                    </div>
-
-                    <div className="mb-6">
-                      <h4 className="font-medium mb-3">Stops</h4>
-                      <div className="space-y-2">
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={stops.direct}
-                            onChange={(e) => setStops({ ...stops, direct: e.target.checked })}
-                            className="w-4 h-4 text-primary border-gray-300 rounded"
-                          />
-                          <span className="text-sm">Direct</span>
-                        </label>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={stops.oneStop}
-                            onChange={(e) => setStops({ ...stops, oneStop: e.target.checked })}
-                            className="w-4 h-4 text-primary border-gray-300 rounded"
-                          />
-                          <span className="text-sm">1 Stop</span>
-                        </label>
-                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={stops.twoPlus}
-                            onChange={(e) => setStops({ ...stops, twoPlus: e.target.checked })}
-                            className="w-4 h-4 text-primary border-gray-300 rounded"
-                          />
-                          <span className="text-sm">2+ Stops</span>
-                        </label>
-                      </div>
                     </div>
 
                     <div className="mb-6">
@@ -1202,7 +1155,7 @@ const Booking = ({ isLoggedIn }) => {
                                   <Plane className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-primary w-4 h-4" />
                                 </div>
                                 <div className="text-xs text-gray-500 mt-1">
-                                  {directOnly ? 'Direct' : 'Direct'}
+                                  Direct
                                 </div>
                               </div>
 
