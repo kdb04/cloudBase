@@ -1,59 +1,66 @@
--- Function1
+-- Procedure 1: find alternative flights for a cancelled booking
 DELIMITER $$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `alternative`(IN cancelled_flight_id BIGINT)
 BEGIN
-   DECLARE cancelled_destination VARCHAR(50);
-   DECLARE cancelled_source VARCHAR(50);
-   DECLARE alt_price BIGINT;
+    DECLARE cancelled_destination VARCHAR(50);
+    DECLARE cancelled_source      VARCHAR(50);
+    DECLARE alt_price             BIGINT;
 
-   SELECT source, destination, price INTO cancelled_source, cancelled_destination, alt_price
-   FROM Flights
-   WHERE flight_id = cancelled_flight_id;
+    SELECT source, destination, price
+    INTO   cancelled_source, cancelled_destination, alt_price
+    FROM   flights
+    WHERE  flight_id = cancelled_flight_id;
 
-   SELECT flight_id, airline_id, departure, arrival, available_seats, price
-   FROM Flights
-   WHERE source = cancelled_source
-     AND destination = cancelled_destination
-     AND available_seats > 0
-     AND flight_id != cancelled_flight_id
-     AND status != 'canceled'
-     AND status != "air"
-   ORDER BY price ASC;
-
+    SELECT flight_id, airline_id, departure, arrival, available_seats, price
+    FROM   flights
+    WHERE  source          = cancelled_source
+      AND  destination     = cancelled_destination
+      AND  available_seats > 0
+      AND  flight_id      != cancelled_flight_id
+      AND  status         != 'canceled'
+      AND  status         != 'air'
+    ORDER BY price ASC;
 END$$
 
 DELIMITER ;
 
--- Function2
-CREATE DEFINER=`root`@`localhost` PROCEDURE `dynamic_pricing`(flightid bigint)
+-- Procedure 2: dynamic pricing based on remaining seat availability
+DELIMITER $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `dynamic_pricing`(IN p_flight_id BIGINT)
 BEGIN
-declare base bigint;
-declare seats bigint;
-declare new_price bigint;
-select price, available_seats into base,seats from Flights where flightid=flight_id;
+    DECLARE base      BIGINT;
+    DECLARE seats     BIGINT;
+    DECLARE new_price BIGINT;
 
-if seats<=5 then
-	set new_price=base*1.20;
+    SELECT price, available_seats INTO base, seats
+    FROM   flights
+    WHERE  flight_id = p_flight_id;
 
-elseif seats<=10 then
-	set new_price=base*1.10;
-else
-	set new_price=base;
-END if;
+    IF seats <= 5 THEN
+        SET new_price = base * 1.20;
+    ELSEIF seats <= 10 THEN
+        SET new_price = base * 1.10;
+    ELSE
+        SET new_price = base;
+    END IF;
 
-update Flights set price=new_price where flightid=flight_id;
-END;
-//
+    UPDATE flights SET price = new_price WHERE flight_id = p_flight_id;
+END$$
 
--- Function3
+DELIMITER ;
+
+-- Procedure 3: list users whose email is blacklisted
 DELIMITER //
+
 CREATE PROCEDURE GetBlacklistedUsers()
 BEGIN
-    SELECT 
+    SELECT
         u.name,
-        u.email,
-    FROM 
+        u.email
+    FROM
         users u INNER JOIN blacklisted_emails b ON u.email = b.b_emails;
 END //
+
 DELIMITER ;
