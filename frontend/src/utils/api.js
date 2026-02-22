@@ -11,6 +11,7 @@ export const ENDPOINTS = {
   MY_TICKETS: '/bookings/my-tickets',
   // Payment
   CREATE_INTENT: '/payment/create-intent',
+  ROUND_TRIP_INTENT: '/payment/create-round-trip-intent',
   // Auth
   LOGIN: '/login',
   SIGNUP: '/login/signup',

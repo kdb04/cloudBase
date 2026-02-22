@@ -43,6 +43,7 @@ const Booking = ({ isLoggedIn }) => {
   const [returnDate, setReturnDate] = useState('');
   const [foodPreference, setFoodPreference] = useState('');
   const [selectedSeats, setSelectedSeats] = useState([]);
+  const [returnSeats, setReturnSeats] = useState([]);
 
   const [availableFlights, setAvailableFlights] = useState([]);
   const [selectedFlightId, setSelectedFlightId] = useState(null);
@@ -110,6 +111,7 @@ const Booking = ({ isLoggedIn }) => {
   // Reset seats when flight selection changes
   useEffect(() => {
     setSelectedSeats([]);
+    setReturnSeats([]);
   }, [selectedFlightId, selectedReturnFlightId]);
 
   // Reset seats when multi-city leg changes
@@ -120,6 +122,7 @@ const Booking = ({ isLoggedIn }) => {
   // Clear seats when cabin class changes (so user re-picks seats in new class)
   useEffect(() => {
     setSelectedSeats([]);
+    setReturnSeats([]);
   }, [travelClass]);
 
   const isMultiCity = tripType === 'multicity';
@@ -408,47 +411,37 @@ const Booking = ({ isLoggedIn }) => {
     }
   };
 
-  const handleRoundTripBookingInitiate = async (leg) => {
+  const handleCombinedRoundTripPayment = async () => {
     setError(null);
     setSuccess(null);
-    const flightId = leg === 'outbound' ? selectedFlightId : selectedReturnFlightId;
-    if (!flightId) {
-      setError(`No flight selected for ${leg} trip`);
+    if (selectedSeats.length === 0 || returnSeats.length === 0) {
+      setError('Please select seats for both outbound and return flights');
       return;
     }
-    if (selectedSeats.length === 0) {
-      setError('Please select at least one seat');
+    if (selectedSeats.length !== returnSeats.length) {
+      setError('Please select the same number of seats for both outbound and return flights');
       return;
     }
 
     try {
-      const token = getAuthToken();
-      if (!token) {
-        setError('You must be logged in to book.');
-        return;
-      }
-
-      setBookingRoundTripLeg(leg);
-
-      const response = await fetch(getApiUrl(ENDPOINTS.CREATE_INTENT), {
+      const response = await fetch(getApiUrl(ENDPOINTS.ROUND_TRIP_INTENT), {
         method: 'POST',
         headers: getAuthHeaders(),
         body: JSON.stringify({
-          flight_id: flightId,
+          outbound_flight_id: selectedFlightId,
+          return_flight_id: selectedReturnFlightId,
           passenger_count: selectedSeats.length,
           class: travelClass
         }),
       });
-
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || 'Payment initialization failed');
-
+      setBookingRoundTripLeg('combined');
       setClientSecret(data.clientSecret);
       setPaymentAmount(data.amount);
       setShowPaymentModal(true);
     } catch (err) {
       console.error('Error initiating booking:', err);
-      setBookingRoundTripLeg(null);
       setError('Failed to initiate booking. Please try again.');
     }
   };
@@ -509,54 +502,49 @@ const Booking = ({ isLoggedIn }) => {
       return;
     }
 
-    if (isRoundTrip && bookingRoundTripLeg !== null) {
-      const leg = bookingRoundTripLeg;
-      const isReturn = leg === 'return';
-      const ticketIds = [];
-
+    if (isRoundTrip && bookingRoundTripLeg === 'combined') {
+      const outIds = [];
+      const retIds = [];
       try {
         for (const seat of selectedSeats) {
-          const bookingData = {
-            passenger_no: passengerNo,
-            class: travelClass,
-            food_preference: foodPreference,
-            date: isReturn ? returnDate : departureDate,
-            source: isReturn ? destination : source,
-            destination: isReturn ? source : destination,
-            seat_no: seat.seatNo,
-            flight_id: isReturn ? selectedReturnFlightId : selectedFlightId,
-            transaction_id: paymentIntentId
-          };
-          const response = await fetch(getApiUrl(ENDPOINTS.CREATE_BOOKING), {
+          const res = await fetch(getApiUrl(ENDPOINTS.CREATE_BOOKING), {
             method: 'POST',
             headers: getAuthHeaders(),
-            body: JSON.stringify(bookingData),
+            body: JSON.stringify({
+              passenger_no: passengerNo, class: travelClass,
+              food_preference: foodPreference, date: departureDate,
+              source, destination,
+              seat_no: seat.seatNo, flight_id: selectedFlightId,
+              transaction_id: paymentIntentId
+            }),
           });
-          if (!response.ok) throw new Error(`Failed to book seat ${seat.seatNo}`);
-          const result = await response.json();
-          ticketIds.push(result.ticket_id);
+          if (!res.ok) throw new Error(`Failed to book outbound seat ${seat.seatNo}`);
+          outIds.push((await res.json()).ticket_id);
         }
-        if (isReturn) {
-          setReturnTicketIds(ticketIds);
-        } else {
-          setTicketIds(ticketIds);
+        for (const seat of returnSeats) {
+          const res = await fetch(getApiUrl(ENDPOINTS.CREATE_BOOKING), {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              passenger_no: passengerNo, class: travelClass,
+              food_preference: foodPreference, date: returnDate,
+              source: destination, destination: source,
+              seat_no: seat.seatNo, flight_id: selectedReturnFlightId,
+              transaction_id: paymentIntentId
+            }),
+          });
+          if (!res.ok) throw new Error(`Failed to book return seat ${seat.seatNo}`);
+          retIds.push((await res.json()).ticket_id);
         }
+        setTicketIds(outIds);
+        setReturnTicketIds(retIds);
         setBookingRoundTripLeg(null);
         setSelectedSeats([]);
-        setSuccess(`${isReturn ? 'Return' : 'Outbound'} flight booked! Ticket IDs: ${ticketIds.map(id => '#' + id).join(', ')}`);
+        setReturnSeats([]);
+        setSuccess(`Round-trip booked! Outbound: ${outIds.map(id => '#' + id).join(', ')} | Return: ${retIds.map(id => '#' + id).join(', ')}`);
       } catch (err) {
         console.error('Error during booking:', err);
-        if (ticketIds.length > 0) {
-          if (isReturn) {
-            setReturnTicketIds(ticketIds);
-          } else {
-            setTicketIds(ticketIds);
-          }
-          setSelectedSeats([]);
-          setError(`Partial booking: ${ticketIds.length} of ${selectedSeats.length} seats booked (Tickets ${ticketIds.map(id => '#' + id).join(', ')}). ${selectedSeats.length - ticketIds.length} seat(s) failed. Contact support for a partial refund.`);
-        } else {
-          setError('Payment succeeded but booking failed. Please contact support.');
-        }
+        setError('Payment succeeded but booking failed. Please contact support.');
         setBookingRoundTripLeg(null);
       }
       return;
@@ -1403,18 +1391,11 @@ const Booking = ({ isLoggedIn }) => {
                       {outboundFlight && (
                         <span className="font-bold text-primary">{formatPrice(outboundFlight.price)}</span>
                       )}
-                      {ticketIds.length > 0 ? (
+                      {ticketIds.length > 0 && (
                         <Badge variant="success">
                           <Check className="inline w-3 h-3 mr-1" />
                           Tickets {ticketIds.map(id => '#' + id).join(', ')}
                         </Badge>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => handleRoundTripBookingInitiate('outbound')}
-                        >
-                          Book Outbound
-                        </Button>
                       )}
                     </div>
                   </div>
@@ -1437,19 +1418,11 @@ const Booking = ({ isLoggedIn }) => {
                       {returnSelectedFlight && (
                         <span className="font-bold text-primary">{formatPrice(returnSelectedFlight.price)}</span>
                       )}
-                      {returnTicketIds.length > 0 ? (
+                      {returnTicketIds.length > 0 && (
                         <Badge variant="success">
                           <Check className="inline w-3 h-3 mr-1" />
                           Tickets {returnTicketIds.map(id => '#' + id).join(', ')}
                         </Badge>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => handleRoundTripBookingInitiate('return')}
-                          disabled={ticketIds.length === 0}
-                        >
-                          Book Return
-                        </Button>
                       )}
                     </div>
                   </div>
@@ -1469,24 +1442,46 @@ const Booking = ({ isLoggedIn }) => {
                     onChange={(e) => setFoodPreference(e.target.value)}
                   />
                 </div>
+
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Select Your Seat
+                    Select Outbound Seats
                   </label>
                   <SeatMap
-                    flightId={ticketIds.length === 0 ? selectedFlightId : selectedReturnFlightId}
+                    flightId={selectedFlightId}
                     selectedSeats={selectedSeats}
                     onSeatsChange={handleSeatsChange}
                     allowedClass={travelClass}
                     maxSeats={Number(passengerNo) || 1}
-                    basePrice={(() => {
-                      if (ticketIds.length === 0) {
-                        return outboundFlight?.price || 0;
-                      }
-                      return returnSelectedFlight?.price || 0;
-                    })()}
+                    basePrice={outboundFlight?.price || 0}
                   />
                 </div>
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Select Return Seats
+                  </label>
+                  <SeatMap
+                    flightId={selectedReturnFlightId}
+                    selectedSeats={returnSeats}
+                    onSeatsChange={(seats) => setReturnSeats(seats)}
+                    allowedClass={travelClass}
+                    maxSeats={Number(passengerNo) || 1}
+                    basePrice={returnSelectedFlight?.price || 0}
+                  />
+                </div>
+
+                {!bothRoundTripBooked && (
+                  <div className="flex justify-end mt-4">
+                    <Button
+                      size="lg"
+                      onClick={handleCombinedRoundTripPayment}
+                      disabled={selectedSeats.length === 0 || returnSeats.length === 0}
+                    >
+                      Book Round Trip — {formatPrice(roundTripTotalPrice)}
+                    </Button>
+                  </div>
+                )}
 
                 {bothRoundTripBooked && (
                   <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg text-center">
