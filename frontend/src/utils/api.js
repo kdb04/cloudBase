@@ -8,6 +8,7 @@ export const ENDPOINTS = {
   ALTERNATE_FLIGHTS: '/bookings/alternate-flights',
   FLIGHT_STATUS: (flightId) => `/bookings/flight-status/${flightId}`,
   TAKEN_SEATS: (flightId) => `/bookings/taken-seats/${flightId}`,
+  MY_TICKETS: '/bookings/my-tickets',
   // Payment
   CREATE_INTENT: '/payment/create-intent',
   // Auth

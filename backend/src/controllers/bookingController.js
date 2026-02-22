@@ -117,9 +117,14 @@ const bookTicket = (req, res) => {
         }
 
     const paymentStatus = transaction_id ? 'Paid' : 'Pending';
-    const query = "INSERT INTO ticket (passenger_no, class, food_preference, source, destination, seat_no, flight_id, transaction_id, payment_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    const userId = req.user?.id;
+    if (!userId) {
+        console.log(`[BOOKING] FAILED - User not authenticated`);
+        return res.status(401).json({ message: "User authentication required" });
+    }
+    const query = "INSERT INTO ticket (passenger_no, class, food_preference, source, destination, seat_no, flight_id, transaction_id, payment_status, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id, transaction_id, paymentStatus], (err, results) => {
+    db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id, transaction_id, paymentStatus, userId], (err, results) => {
         if (err){
             console.log(`[BOOKING] FAILED - Error booking flight ${flight_id}: ${err.message}`);
             return res.status(500).json({ message: "Error booking flight", error: err});
@@ -239,17 +244,17 @@ const cancelTicket = async (req, res) => {
     const userEmail = req.user.email;
     console.log(`[CANCEL] Attempting to cancel ticket ID: ${ticket_id}`);
 
-    // Fetch ticket details before deletion
+    // Fetch ticket details before deletion (ownership check via user_id)
     db.query(
-        "SELECT ticket_id, flight_id, transaction_id, payment_status, source, destination, class, seat_no, food_preference FROM ticket WHERE ticket_id = ?",
-        [ticket_id],
+        "SELECT ticket_id, flight_id, transaction_id, payment_status, source, destination, class, seat_no, food_preference FROM ticket WHERE ticket_id = ? AND user_id = ?",
+        [ticket_id, req.user.id],
         async (err, ticketResults) => {
             if (err) {
                 console.log(`[CANCEL] FAILED - Error fetching ticket ${ticket_id}: ${err.message}`);
                 return res.status(500).json({ message: "Error cancelling flight", error: err });
             }
             if (ticketResults.length === 0) {
-                console.log(`[CANCEL] NOT FOUND - Ticket ID: ${ticket_id}`);
+                console.log(`[CANCEL] NOT FOUND or UNAUTHORIZED - Ticket ID: ${ticket_id}`);
                 return res.status(404).json({ message: "Ticket not found" });
             }
 
@@ -384,4 +389,29 @@ const getTakenSeats = (req, res) => {
     });
 };
 
-module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats };
+const getMyTickets = (req, res) => {
+    const userId = req.user.id;
+    console.log(`[READ] Fetching tickets for user: ${userId}`);
+    const query = `
+        SELECT t.ticket_id, t.flight_id, t.source, t.destination,
+               t.class, t.seat_no, t.food_preference,
+               t.transaction_id, t.payment_status, t.amount_paid,
+               f.departure, f.arrival, f.date, f.status AS flight_status,
+               a.airline_name
+        FROM ticket t
+        JOIN flights f ON t.flight_id = f.flight_id
+        LEFT JOIN airlines a ON f.airline_id = a.airline_id
+        WHERE t.user_id = ?
+        ORDER BY f.date DESC, f.departure DESC
+    `;
+    db.query(query, [userId], (err, results) => {
+        if (err) {
+            console.log(`[READ] FAILED - Error fetching tickets for user ${userId}: ${err.message}`);
+            return res.status(500).json({ message: "Error fetching bookings", error: err });
+        }
+        console.log(`[READ] Found ${results.length} tickets for user ${userId}`);
+        return res.status(200).json({ tickets: results });
+    });
+};
+
+module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets };

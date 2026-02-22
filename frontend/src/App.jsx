@@ -10,7 +10,8 @@ import {
   AboutPage,
   ContactPage,
   AdminPage,
-  FlightStatusPage
+  FlightStatusPage,
+  MyBookingsPage
 } from './pages';
 import { getUserRole } from './utils/auth';
 
@@ -36,6 +37,10 @@ function App() {
             <Route path="/flight-status" element={<FlightStatusPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
+            <Route
+              path="/my-bookings"
+              element={isLoggedIn ? <MyBookingsPage /> : <Navigate to="/login" replace />}
+            />
             <Route
               path="/admin"
               element={
