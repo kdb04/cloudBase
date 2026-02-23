@@ -1,31 +1,53 @@
 -- migrations.sql 
 
--- 1. users 
+-- 1. users
 
-ALTER TABLE users ADD COLUMN name VARCHAR(100) NULL;
+SET @col = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'name');
+SET @sql = IF(@col = 0, 'ALTER TABLE users ADD COLUMN name VARCHAR(100) NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 UPDATE users SET role = 'admin' WHERE email = 'admin@example.com';
 
 
--- 2. ticket 
+-- 2. ticket
 
-ALTER TABLE ticket ADD COLUMN user_id INT NULL;
+SET @col = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ticket' AND COLUMN_NAME = 'user_id');
+SET @sql = IF(@col = 0, 'ALTER TABLE ticket ADD COLUMN user_id INT NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-ALTER TABLE ticket
-    ADD CONSTRAINT fk_ticket_user FOREIGN KEY (user_id) REFERENCES users(user_id);
+SET @fk = (SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+           WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'ticket'
+           AND CONSTRAINT_NAME = 'fk_ticket_user' AND CONSTRAINT_TYPE = 'FOREIGN KEY');
+SET @sql = IF(@fk = 0,
+    'ALTER TABLE ticket ADD CONSTRAINT fk_ticket_user FOREIGN KEY (user_id) REFERENCES users(user_id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
--- 3. commuters 
+-- 3. commuters
 
-ALTER TABLE commuters ADD COLUMN user_id INT NULL;
+SET @col = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'commuters' AND COLUMN_NAME = 'user_id');
+SET @sql = IF(@col = 0, 'ALTER TABLE commuters ADD COLUMN user_id INT NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-ALTER TABLE commuters
-    ADD CONSTRAINT fk_commuters_user FOREIGN KEY (user_id) REFERENCES users(user_id);
+SET @fk = (SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+           WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'commuters'
+           AND CONSTRAINT_NAME = 'fk_commuters_user' AND CONSTRAINT_TYPE = 'FOREIGN KEY');
+SET @sql = IF(@fk = 0,
+    'ALTER TABLE commuters ADD CONSTRAINT fk_commuters_user FOREIGN KEY (user_id) REFERENCES users(user_id)',
+    'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
--- 4. flights 
+-- 4. flights
 
-ALTER TABLE flights ADD COLUMN stops INT NOT NULL DEFAULT 0;
+SET @col = (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'flights' AND COLUMN_NAME = 'stops');
+SET @sql = IF(@col = 0, 'ALTER TABLE flights ADD COLUMN stops INT NOT NULL DEFAULT 0', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 
 -- 5. New tables 
@@ -141,10 +163,108 @@ END //
 DELIMITER ;
 
 
--- 9. Indexes 
+-- 9. Indexes
 
-CREATE INDEX idx_ticket_user     ON ticket(user_id);
-CREATE INDEX idx_ticket_flight   ON ticket(flight_id);
-CREATE INDEX idx_waitlist_flight ON waitlist(flight_id, status);
-CREATE INDEX idx_flights_route   ON flights(source, destination, date);
-CREATE INDEX idx_point_tx_user   ON point_transactions(user_id);
+SET @i = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ticket'            AND INDEX_NAME = 'idx_ticket_user');
+SET @sql = IF(@i = 0, 'CREATE INDEX idx_ticket_user ON ticket(user_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @i = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ticket'            AND INDEX_NAME = 'idx_ticket_flight');
+SET @sql = IF(@i = 0, 'CREATE INDEX idx_ticket_flight ON ticket(flight_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @i = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'waitlist'          AND INDEX_NAME = 'idx_waitlist_flight');
+SET @sql = IF(@i = 0, 'CREATE INDEX idx_waitlist_flight ON waitlist(flight_id, status)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @i = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'flights'           AND INDEX_NAME = 'idx_flights_route');
+SET @sql = IF(@i = 0, 'CREATE INDEX idx_flights_route ON flights(source, destination, date)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @i = (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'point_transactions' AND INDEX_NAME = 'idx_point_tx_user');
+SET @sql = IF(@i = 0, 'CREATE INDEX idx_point_tx_user ON point_transactions(user_id)', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+
+-- 10. Flight status triggers
+
+DROP TRIGGER IF EXISTS set_flight_status_on_insert;
+DROP TRIGGER IF EXISTS set_flight_status_on_update;
+
+DELIMITER $$
+
+CREATE TRIGGER set_flight_status_on_insert
+BEFORE INSERT ON flights
+FOR EACH ROW
+BEGIN
+    IF NEW.status != 'canceled' THEN
+        SET NEW.status = CASE
+            WHEN NEW.date < CURDATE()                                                          THEN 'completed'
+            WHEN NEW.date = CURDATE() AND CURTIME() > NEW.arrival                             THEN 'completed'
+            WHEN NEW.date = CURDATE() AND CURTIME() BETWEEN NEW.departure AND NEW.arrival     THEN 'in air'
+            ELSE 'scheduled'
+        END;
+    END IF;
+END$$
+
+CREATE TRIGGER set_flight_status_on_update
+BEFORE UPDATE ON flights
+FOR EACH ROW
+BEGIN
+    IF NEW.status != 'canceled' THEN
+        SET NEW.status = CASE
+            WHEN NEW.date < CURDATE()                                                          THEN 'completed'
+            WHEN NEW.date = CURDATE() AND CURTIME() > NEW.arrival                             THEN 'completed'
+            WHEN NEW.date = CURDATE() AND CURTIME() BETWEEN NEW.departure AND NEW.arrival     THEN 'in air'
+            ELSE 'scheduled'
+        END;
+    END IF;
+END$$
+
+DELIMITER ;
+
+
+-- 11. Fix alternative() procedure: update status filter from 'air' to 'in air'
+
+DROP PROCEDURE IF EXISTS alternative;
+
+DELIMITER $$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `alternative`(
+    IN cancelled_flight_id BIGINT,
+    IN departure_date      DATE
+)
+BEGIN
+    DECLARE cancelled_destination VARCHAR(50);
+    DECLARE cancelled_source      VARCHAR(50);
+    DECLARE alt_price             BIGINT;
+
+    SELECT source, destination, price
+    INTO   cancelled_source, cancelled_destination, alt_price
+    FROM   flights
+    WHERE  flight_id = cancelled_flight_id;
+
+    SELECT flight_id, airline_id, departure, arrival, available_seats, price
+    FROM   flights
+    WHERE  source          = cancelled_source
+      AND  destination     = cancelled_destination
+      AND  available_seats > 0
+      AND  flight_id      != cancelled_flight_id
+      AND  status         != 'canceled'
+      AND  status         != 'in air'
+    ORDER BY price ASC;
+END$$
+
+DELIMITER ;
+
+
+-- 12. Backfill existing flight statuses
+
+UPDATE flights
+SET status = CASE
+    WHEN date < CURDATE()                                                     THEN 'completed'
+    WHEN date = CURDATE() AND CURTIME() > arrival                             THEN 'completed'
+    WHEN date = CURDATE() AND CURTIME() BETWEEN departure AND arrival         THEN 'in air'
+    ELSE 'scheduled'
+END
+WHERE status != 'canceled';

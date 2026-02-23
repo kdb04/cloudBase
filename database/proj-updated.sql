@@ -258,6 +258,40 @@ END$$
 
 DELIMITER ;
 
+DELIMITER $$
+
+-- Set status on INSERT based on date/time
+CREATE TRIGGER set_flight_status_on_insert
+BEFORE INSERT ON flights
+FOR EACH ROW
+BEGIN
+    IF NEW.status != 'canceled' THEN
+        SET NEW.status = CASE
+            WHEN NEW.date < CURDATE()                                                          THEN 'completed'
+            WHEN NEW.date = CURDATE() AND CURTIME() > NEW.arrival                             THEN 'completed'
+            WHEN NEW.date = CURDATE() AND CURTIME() BETWEEN NEW.departure AND NEW.arrival     THEN 'in air'
+            ELSE 'scheduled'
+        END;
+    END IF;
+END$$
+
+-- Re-evaluate status on UPDATE (fires from decrease_seats / increase_seats / direct updates)
+CREATE TRIGGER set_flight_status_on_update
+BEFORE UPDATE ON flights
+FOR EACH ROW
+BEGIN
+    IF NEW.status != 'canceled' THEN
+        SET NEW.status = CASE
+            WHEN NEW.date < CURDATE()                                                          THEN 'completed'
+            WHEN NEW.date = CURDATE() AND CURTIME() > NEW.arrival                             THEN 'completed'
+            WHEN NEW.date = CURDATE() AND CURTIME() BETWEEN NEW.departure AND NEW.arrival     THEN 'in air'
+            ELSE 'scheduled'
+        END;
+    END IF;
+END$$
+
+DELIMITER ;
+
 
 -- procedures --
 
@@ -284,7 +318,7 @@ BEGIN
       AND  available_seats > 0
       AND  flight_id      != cancelled_flight_id
       AND  status         != 'canceled'
-      AND  status         != 'air'
+      AND  status         != 'in air'
     ORDER BY price ASC;
 END$$
 
