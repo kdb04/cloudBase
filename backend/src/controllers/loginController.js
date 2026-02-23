@@ -42,7 +42,7 @@ const userLogin = async (req, res) => {
                 }
 
                 const token = jwt.sign(
-                    { id: user.user_id, email: user.email },
+                    { id: user.user_id, email: user.email, role: user.role },
                     process.env.JWT_SECRET,
                     { expiresIn: '1h' }
                 );
@@ -67,7 +67,7 @@ const userLogin = async (req, res) => {
                     if (insertError) return res.status(500).json({ message: "Database error", insertError });
 
                     const token = jwt.sign(
-                        { id: insertResults.insertId, email },
+                        { id: insertResults.insertId, email, role: 'user' },
                         process.env.JWT_SECRET,
                         { expiresIn: '1h' }
                     );
@@ -119,7 +119,7 @@ const userSignup = async (req, res) => {
                 if (insertError) return res.status(500).json({ message: "Database error", insertError });
 
                 const token = jwt.sign(
-                    { id: insertResults.insertId, email },
+                    { id: insertResults.insertId, email, role: 'user' },
                     process.env.JWT_SECRET,
                     { expiresIn: '1h' }
                 );

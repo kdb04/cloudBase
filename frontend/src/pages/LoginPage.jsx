@@ -4,7 +4,7 @@ import { Mail, Lock, Plane } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { Card, Button, Input } from '../components/ui';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
-import { setAuthToken, isAdminUser } from '../utils/auth';
+import { setAuthToken, getRoleFromToken } from '../utils/auth';
 import { handleApiResponse } from '../utils/errorHandling';
 import { validateEmail, validatePassword } from '../utils/validators';
 
@@ -76,7 +76,7 @@ function LoginForm({ onLoginSuccess }) {
 
       onLoginSuccess(email);
 
-      if (isAdminUser(email)) {
+      if (getRoleFromToken() === 'admin') {
         console.log('Admin logged in', data.user);
         navigate('/admin');
       } else {

@@ -6,21 +6,24 @@ export const setAuthToken = (token) => {
 export const removeAuthToken = () => sessionStorage.removeItem('token');
 export const hasAuthToken = () => !!getAuthToken();
 
-export const getEmailFromToken = () => {
-  const token = getAuthToken();
-  if (!token) return null;
+const decodePayload = (token) => {
+  if(!token) return null;
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(base64)).email ?? null;
+    return JSON.parse(atob(base64));
   } catch {
     return null;
   }
 };
 
-export const ADMIN_EMAIL = 'admin@example.com';
-export const isAdminUser = (email) => email === ADMIN_EMAIL;
-export const getUserRole = (email) => isAdminUser(email) ? 'admin' : 'user';
+export const getEmailFromToken = () => {
+  return decodePayload(getAuthToken())?.email || null;
+};
+
+export const getRoleFromToken = () => {
+  return decodePayload(getAuthToken())?.role || null;
+};
 
 export const getAuthHeaders = () => {
   const token = getAuthToken();
