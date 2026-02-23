@@ -13,11 +13,14 @@ import {
   FlightStatusPage,
   MyBookingsPage
 } from './pages';
-import { getUserRole } from './utils/auth';
+import { getUserRole, hasAuthToken, getEmailFromToken } from './utils/auth';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => hasAuthToken());
+  const [userRole, setUserRole] = useState(() => {
+    const email = getEmailFromToken();
+    return email ? getUserRole(email) : null;
+  });
 
   const handleLogin = (email) => {
     setIsLoggedIn(true);
