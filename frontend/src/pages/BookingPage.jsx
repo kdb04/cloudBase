@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/layout';
-import { Card, Button, Input, Badge, SeatMap } from '../components/ui';
+import { Card, Button, Input, Badge, SeatMap, LocationInput } from '../components/ui';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { PaymentModal } from '../components/ui/PaymentModal';
@@ -695,7 +695,7 @@ const Booking = ({ isLoggedIn }) => {
                           : ''
                       }`}
                     >
-                      <Input
+                      <LocationInput
                         label={`Leg ${index + 1} - From`}
                         icon={PlaneTakeoff}
                         placeholder="City or airport"
@@ -703,7 +703,7 @@ const Booking = ({ isLoggedIn }) => {
                         onChange={(e) => updateLeg(index, 'source', e.target.value)}
                         onFocus={() => setCurrentLeg(index)}
                       />
-                      <Input
+                      <LocationInput
                         label="To"
                         icon={PlaneLanding}
                         placeholder="City or airport"
@@ -745,7 +745,7 @@ const Booking = ({ isLoggedIn }) => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_1fr] gap-x-10 gap-y-6 mb-6 text-center">
                   <div className="relative">
-                    <Input
+                    <LocationInput
                       label="Flying From"
                       icon={PlaneTakeoff}
                       placeholder="City or airport"
@@ -762,7 +762,7 @@ const Booking = ({ isLoggedIn }) => {
                     >
                       <ArrowLeftRight className="w-4 h-4" />
                     </button>
-                    <Input
+                    <LocationInput
                       label="Flying To"
                       icon={PlaneLanding}
                       placeholder="City or airport"

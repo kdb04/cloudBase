@@ -309,7 +309,7 @@ const getAvailableFlights = (req, res) => {
     const { source, destination, date, min_price, max_price } = req.query;
     console.log(`[READ] Searching flights: ${source} -> ${destination}${date ? ` on ${date}` : ''}`);
 
-    let query = "SELECT flight_id, airline_id, source, destination, available_seats, price, arrival, departure, date, status FROM Flights WHERE source = ? AND destination = ? AND status != 'canceled'";
+    let query = "SELECT flight_id, airline_id, source, destination, available_seats, price, arrival, departure, date, status FROM Flights WHERE source = ? AND destination = ? AND status = 'scheduled'";
     const params = [source, destination];
 
     if (date) {
@@ -414,4 +414,23 @@ const getMyTickets = (req, res) => {
     });
 };
 
-module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets };
+const getLocations = (req, res) => {
+    const { q } = req.query;
+    const searchTerm = `%${q || ''}%`;
+    const query = `
+        SELECT DISTINCT city FROM (
+            SELECT source AS city FROM flights
+            UNION
+            SELECT destination AS city FROM flights
+        ) AS cities
+        WHERE city LIKE ?
+        ORDER BY city ASC
+        LIMIT 10
+    `;
+    db.query(query, [searchTerm], (err, results) => {
+        if (err) return res.status(500).json({ error: 'Error fetching locations' });
+        return res.status(200).json({ locations: results.map(r => r.city) });
+    });
+};
+
+module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets, getLocations };

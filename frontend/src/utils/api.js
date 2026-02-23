@@ -2,6 +2,7 @@ export const API_BASE_URL = 'http://localhost:3000/api';
 
 export const ENDPOINTS = {
   // Booking
+  LOCATIONS: '/bookings/locations',
   AVAILABLE_FLIGHTS: '/bookings/available-flights',
   CREATE_BOOKING: '/bookings',
   CANCEL_BOOKING: (ticketId) => `/bookings/${ticketId}`,

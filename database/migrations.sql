@@ -268,3 +268,9 @@ SET status = CASE
     ELSE 'scheduled'
 END
 WHERE status != 'canceled';
+
+
+-- 13. Convert flights.status from VARCHAR(20) to ENUM
+
+ALTER TABLE flights
+    MODIFY COLUMN status ENUM('scheduled','in air','completed','canceled') NOT NULL DEFAULT 'scheduled';
