@@ -1,4 +1,4 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   PlaneTakeoff,
@@ -53,6 +53,7 @@ const Booking = ({ isLoggedIn }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
+  const [selectedStops, setSelectedStops] = useState([]);
 
 
   const [showRerouteModal, setShowRerouteModal] = useState(false);
@@ -124,6 +125,12 @@ const Booking = ({ isLoggedIn }) => {
     setSelectedSeats([]);
     setReturnSeats([]);
   }, [travelClass]);
+
+  // Clear stop filters when route/date/leg context changes so stale filters
+  // don't hide freshly fetched results
+  useEffect(() => {
+    setSelectedStops([]);
+  }, [source, destination, departureDate, returnDate, legs, currentLeg]);
 
   const isMultiCity = tripType === 'multicity';
   const isRoundTrip = tripType === 'roundtrip';
@@ -218,6 +225,7 @@ const Booking = ({ isLoggedIn }) => {
   const handleSearch = async () => {
     setError(null);
     setSuccess(null);
+    setSelectedStops([]);
     if (isMultiCity) {
       const leg = legs[currentLeg];
       if (!leg.source || !leg.destination) {
@@ -648,10 +656,24 @@ const Booking = ({ isLoggedIn }) => {
     }
   };
 
+  const toggleStop = (val) => {
+    setSelectedStops((prev) =>
+      prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]
+    );
+  };
+
   const getFilteredAndSortedFlights = () => {
-    const filtered = filterFlights(currentFlights, { minPrice, maxPrice });
+    const filtered = filterFlights(currentFlights, { minPrice, maxPrice, selectedStops });
     return sortFlights(filtered, sortBy);
   };
+
+  const filteredAndSortedFlights = useMemo(() => getFilteredAndSortedFlights(), [
+    currentFlights,
+    minPrice,
+    maxPrice,
+    selectedStops,
+    sortBy,
+  ]);
 
   const unbookedLegIndex = legs.findIndex((_, i) => !legTicketIds[i] && legSelectedFlightId[i]);
   const activeLegIndex = unbookedLegIndex >= 0 ? unbookedLegIndex : 0;
@@ -1013,7 +1035,7 @@ const Booking = ({ isLoggedIn }) => {
                   </div>
 
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Showing {getFilteredAndSortedFlights().length} of {currentFlights.length} results
+                    Showing {filteredAndSortedFlights.length} of {currentFlights.length} results
                   </p>
                 </div>
               </div>
@@ -1032,6 +1054,7 @@ const Booking = ({ isLoggedIn }) => {
                         onClick={() => {
                           setMinPrice('');
                           setMaxPrice('');
+                          setSelectedStops([]);
                         }}
                         className="text-sm text-primary hover:underline"
                       >
@@ -1039,6 +1062,26 @@ const Booking = ({ isLoggedIn }) => {
                       </button>
                     </div>
 
+                    <div className="mb-6">
+                      <h4 className="font-medium mb-3">Stops</h4>
+                      <div className="space-y-2">
+                        {[
+                          { val: 0, label: 'Direct' },
+                          { val: 1, label: '1 Stop' },
+                          { val: 2, label: '2+ Stops' },
+                        ].map(({ val, label }) => (
+                          <label key={val} className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={selectedStops.includes(val)}
+                              onChange={() => toggleStop(val)}
+                              className="rounded border-gray-300 text-primary focus:ring-primary"
+                            />
+                            <span className="text-sm">{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                     <div className="mb-6">
                       <h4 className="font-medium mb-3">Price Range</h4>
                       <div className="space-y-3">
@@ -1075,7 +1118,7 @@ const Booking = ({ isLoggedIn }) => {
                   animate="visible"
                   variants={staggerContainer}
                 >
-                  {getFilteredAndSortedFlights().length === 0 && (
+                  {filteredAndSortedFlights.length === 0 && (
                     <div className="text-center py-12 px-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                       <SlidersHorizontal className="w-12 h-12 mx-auto text-yellow-400 mb-4" />
                       <h3 className="text-lg font-semibold text-yellow-400 mb-2">
@@ -1086,7 +1129,7 @@ const Booking = ({ isLoggedIn }) => {
                       </p>
                     </div>
                   )}
-                  {getFilteredAndSortedFlights().map((flight) => (
+                  {filteredAndSortedFlights.map((flight) => (
                     <motion.div
                       key={flight.flight_id}
                       variants={fadeInUp}

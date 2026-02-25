@@ -24,19 +24,24 @@ export const sortFlights = (flights, sortBy = 'recommended') => {
   }
 };
 
-export const filterFlights = (flights, { minPrice = '', maxPrice = '' } = {}) => {
+export const filterFlights = (flights, { minPrice = '', maxPrice = '', selectedStops = [] } = {}) => {
   let filtered = flights;
 
   // Price range filter (client-side, supplements backend filtering)
   const min = minPrice !== '' ? Number(minPrice) : null;
   const max = maxPrice !== '' ? Number(maxPrice) : null;
 
-  if (min !== null) {
-    filtered = filtered.filter((f) => (f.price || 0) >= min);
-  }
-  if (max !== null) {
-    filtered = filtered.filter((f) => (f.price || 0) <= max);
-  }
+  filtered = filtered.filter((f) => {
+    const price = f.price || 0;
+    if (min !== null && price < min) return false;
+    if (max !== null && price > max) return false;
+
+    if(selectedStops.length > 0) {
+      const s = f.stops ?? 0;
+      if (!selectedStops.some((val) => (val === 2 ? s >= 2 : s === val))) return false;
+    }
+    return true;
+  });
 
   return filtered;
 };

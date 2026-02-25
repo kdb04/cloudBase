@@ -306,10 +306,10 @@ const cancelTicket = async (req, res) => {
 };
 
 const getAvailableFlights = (req, res) => {
-    const { source, destination, date, min_price, max_price } = req.query;
+    const { source, destination, date, min_price, max_price, stops } = req.query;
     console.log(`[READ] Searching flights: ${source} -> ${destination}${date ? ` on ${date}` : ''}`);
 
-    let query = "SELECT flight_id, airline_id, source, destination, available_seats, price, arrival, departure, date, status FROM Flights WHERE source = ? AND destination = ? AND status = 'scheduled'";
+    let query = "SELECT flight_id, airline_id, source, destination, available_seats, price, arrival, departure, date, status, stops FROM Flights WHERE source = ? AND destination = ? AND status = 'scheduled'";
     const params = [source, destination];
 
     if (date) {
@@ -325,6 +325,13 @@ const getAvailableFlights = (req, res) => {
     if (max_price) {
         query += " AND price <= ?";
         params.push(Number(max_price));
+    }
+
+    if (stops !== undefined && stops !== '') {
+        const stopsNum = Number(stops);
+        if (isNaN(stopsNum)) return res.status(400).json({ message: "Invalid stops value" });
+        if (stopsNum >= 2) query += " AND stops >= ?";
+        else query += " AND stops = ?";
     }
 
     db.query(query, params, (err, results) => {
