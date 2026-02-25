@@ -423,7 +423,7 @@ const getMyTickets = (req, res) => {
 
 const getLocations = (req, res) => {
     const { q } = req.query;
-    const searchTerm = `%${q || ''}%`;
+    const searchTerm = `${q || ''}%`;
     const query = `
         SELECT DISTINCT city FROM (
             SELECT source AS city FROM flights
