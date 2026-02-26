@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlaneTakeoff, PlaneLanding, Calendar, Ticket, X } from 'lucide-react';
+import { PlaneTakeoff, PlaneLanding, Calendar, Ticket, X, Clock } from 'lucide-react';
 import { Layout } from '../components/layout';
 import { Card, Badge, Button } from '../components/ui';
 import { getApiUrl, ENDPOINTS } from '../utils/api';
@@ -154,8 +154,117 @@ const TicketCard = ({ ticket, onCancel }) => {
     );
 };
 
+const WAITLIST_STATUS_VARIANT = {
+    waiting: 'warning',
+    confirmed: 'success',
+    cancelled: 'danger',
+    expired: 'secondary',
+};
+
+const WaitlistCard = ({ entry, onLeave }) => {
+    const [leaving, setLeaving] = useState(false);
+    const canLeave = entry.status === 'waiting' || entry.status === 'confirmed';
+
+    const handleLeave = async () => {
+        if (!window.confirm('Remove yourself from this waitlist?')) return;
+        setLeaving(true);
+        try {
+            const res = await fetch(getApiUrl(ENDPOINTS.LEAVE_WAITLIST(entry.waitlist_id)), {
+                method: 'DELETE',
+                headers: getAuthHeaders(),
+            });
+            if (!res.ok) {
+                let message = 'Failed to leave waitlist';
+                try { const d = await res.json(); message = d.message || message; } catch { /* ignore */ }
+                alert(message);
+                return;
+            }
+            onLeave(entry.waitlist_id);
+        } catch {
+            alert('Network error. Please try again.');
+        } finally {
+            setLeaving(false);
+        }
+    };
+
+    return (
+        <Card className="p-5">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-mono text-gray-500 dark:text-gray-400">
+                            Waitlist #{entry.waitlist_id}
+                        </span>
+                        {entry.airline_name && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                · {entry.airline_name}
+                            </span>
+                        )}
+                    </div>
+
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="flex items-center gap-1.5">
+                            <PlaneTakeoff className="w-4 h-4 text-primary shrink-0" />
+                            <span className="text-base font-semibold text-gray-900 dark:text-white">
+                                {entry.source}
+                            </span>
+                        </div>
+                        <span className="text-gray-400">→</span>
+                        <div className="flex items-center gap-1.5">
+                            <PlaneLanding className="w-4 h-4 text-primary shrink-0" />
+                            <span className="text-base font-semibold text-gray-900 dark:text-white">
+                                {entry.destination}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 text-sm text-gray-600 dark:text-gray-300">
+                        <div className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                            <span>{formatDate(entry.date)}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-400">Class </span>
+                            <span className="capitalize">{entry.class || 'Any'}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-gray-400" />
+                            <span>Requested {formatDate(entry.requested_at)}</span>
+                        </div>
+                    </div>
+
+                    {entry.status === 'confirmed' && (
+                        <p className="mt-3 text-sm font-medium text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded px-3 py-2">
+                            A seat is available! Book now before it expires.
+                        </p>
+                    )}
+                </div>
+
+                <div className="flex sm:flex-col items-center sm:items-end gap-3 sm:gap-2 shrink-0">
+                    <Badge variant={WAITLIST_STATUS_VARIANT[entry.status] || 'secondary'}>
+                        {entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
+                    </Badge>
+                    {canLeave && (
+                        <Button
+                            variant="danger"
+                            size="sm"
+                            onClick={handleLeave}
+                            disabled={leaving}
+                            className="flex items-center gap-1"
+                        >
+                            <X className="w-3.5 h-3.5" />
+                            {leaving ? 'Leaving…' : 'Leave'}
+                        </Button>
+                    )}
+                </div>
+            </div>
+        </Card>
+    );
+};
+
 const MyBookingsPage = () => {
     const [tickets, setTickets] = useState([]);
+    const [waitlist, setWaitlist] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -168,19 +277,25 @@ const MyBookingsPage = () => {
         }
 
         const controller = new AbortController();
+        const opts = { headers: getAuthHeaders(), signal: controller.signal };
 
-        fetch(getApiUrl(ENDPOINTS.MY_TICKETS), {
-            headers: getAuthHeaders(),
-            signal: controller.signal,
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                return res.json();
+        Promise.all([
+            fetch(getApiUrl(ENDPOINTS.MY_TICKETS), opts).then((r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            }),
+            fetch(getApiUrl(ENDPOINTS.MY_WAITLIST), opts).then((r) => {
+                if (!r.ok) throw new Error(`HTTP ${r.status}`);
+                return r.json();
+            }),
+        ])
+            .then(([ticketData, waitlistData]) => {
+                setTickets(ticketData.tickets || []);
+                setWaitlist(waitlistData.waitlist || []);
             })
-            .then((data) => setTickets(data.tickets || []))
             .catch((err) => {
                 if (err.name !== 'AbortError') {
-                    console.error('[ERROR]: Failed to fetch tickets:', err);
+                    console.error('[ERROR]: Failed to fetch bookings:', err);
                     setError(err.message);
                 }
             })
@@ -191,6 +306,10 @@ const MyBookingsPage = () => {
 
     const handleCancelled = (ticketId) => {
         setTickets((prev) => prev.filter((t) => t.ticket_id !== ticketId));
+    };
+
+    const handleWaitlistLeave = (waitlistId) => {
+        setWaitlist((prev) => prev.filter((w) => w.waitlist_id !== waitlistId));
     };
 
     const upcoming = tickets.filter(isUpcoming);
@@ -231,6 +350,19 @@ const MyBookingsPage = () => {
                             Search Flights
                         </Button>
                     </div>
+                )}
+
+                {!loading && !error && waitlist.length > 0 && (
+                    <section className="mb-8">
+                        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                            Waitlist ({waitlist.length})
+                        </h2>
+                        <div className="flex flex-col gap-4">
+                            {waitlist.map((w) => (
+                                <WaitlistCard key={w.waitlist_id} entry={w} onLeave={handleWaitlistLeave} />
+                            ))}
+                        </div>
+                    </section>
                 )}
 
                 {!loading && !error && upcoming.length > 0 && (

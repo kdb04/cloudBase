@@ -10,6 +10,9 @@ export const ENDPOINTS = {
   FLIGHT_STATUS: (flightId) => `/bookings/flight-status/${flightId}`,
   TAKEN_SEATS: (flightId) => `/bookings/taken-seats/${flightId}`,
   MY_TICKETS: '/bookings/my-tickets',
+  MY_WAITLIST: '/bookings/my-waitlist',
+  JOIN_WAITLIST: '/bookings/waitlist',
+  LEAVE_WAITLIST: (id) => `/bookings/waitlist/${id}`,
   // Payment
   CREATE_INTENT: '/payment/create-intent',
   ROUND_TRIP_INTENT: '/payment/create-round-trip-intent',

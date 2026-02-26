@@ -56,6 +56,9 @@ const Booking = ({ isLoggedIn }) => {
   const [selectedStops, setSelectedStops] = useState([]);
 
 
+  const [waitlistJoined, setWaitlistJoined] = useState({}); // { flight_id: waitlist_id }
+  const [joiningWaitlist, setJoiningWaitlist] = useState(null);
+
   const [showRerouteModal, setShowRerouteModal] = useState(false);
   const [cancelledFlightId, setCancelledFlightId] = useState('');
   const [alternateFlights, setAlternateFlights] = useState([]);
@@ -212,6 +215,29 @@ const Booking = ({ isLoggedIn }) => {
       setSelectedReturnFlightId(flightId);
     } else {
       setSelectedFlightId(flightId);
+    }
+  };
+
+  const handleJoinWaitlist = async (flight) => {
+    setError(null);
+    setJoiningWaitlist(flight.flight_id);
+    try {
+      const res = await fetch(getApiUrl(ENDPOINTS.JOIN_WAITLIST), {
+        method: 'POST',
+        headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flight_id: flight.flight_id, class: travelClass }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || 'Failed to join waitlist');
+        return;
+      }
+      setWaitlistJoined(prev => ({ ...prev, [flight.flight_id]: data.waitlist_id }));
+      setSuccess(`Added to waitlist for Flight ${flight.flight_id}. We'll email you when a seat opens.`);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setJoiningWaitlist(null);
     }
   };
 
@@ -1135,11 +1161,11 @@ const Booking = ({ isLoggedIn }) => {
                       variants={fadeInUp}
                     >
                       <Card
-                        hover
-                        className={`cursor-pointer ${
+                        hover={flight.available_seats !== 0}
+                        className={`${flight.available_seats === 0 ? 'opacity-80' : 'cursor-pointer'} ${
                           currentSelectedFlightId === flight.flight_id ? 'ring-2 ring-primary' : ''
                         }`}
-                        onClick={() => handleSelectFlight(flight.flight_id)}
+                        onClick={() => flight.available_seats !== 0 && handleSelectFlight(flight.flight_id)}
                       >
                         <div className="flex flex-col md:flex-row justify-between gap-4">
                           <div className="flex-1">
@@ -1159,11 +1185,13 @@ const Booking = ({ isLoggedIn }) => {
                                   </Badge>
                                 )}
                               </div>
-                              {flight.available_seats && flight.available_seats < 5 && (
+                              {flight.available_seats === 0 ? (
+                                <Badge variant="danger" size="sm">Fully Booked</Badge>
+                              ) : flight.available_seats < 5 ? (
                                 <Badge variant="warning" size="sm">
                                   {flight.available_seats} seats left
                                 </Badge>
-                              )}
+                              ) : null}
                             </div>
 
                             <div className="flex items-center space-x-4">
@@ -1212,17 +1240,38 @@ const Booking = ({ isLoggedIn }) => {
                               </div>
                               <div className="text-xs text-gray-500">per person</div>
                             </div>
-                            <Button
-                              variant={currentSelectedFlightId === flight.flight_id ? 'primary' : 'outline'}
-                              size="md"
-                              fullWidth
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSelectFlight(flight.flight_id);
-                              }}
-                            >
-                              {currentSelectedFlightId === flight.flight_id ? 'Selected' : 'Select'}
-                            </Button>
+                            {flight.available_seats === 0 ? (
+                              waitlistJoined[flight.flight_id] ? (
+                                <Badge variant="success" className="w-full text-center py-2 block">
+                                  On Waitlist
+                                </Badge>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="md"
+                                  fullWidth
+                                  disabled={joiningWaitlist === flight.flight_id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleJoinWaitlist(flight);
+                                  }}
+                                >
+                                  {joiningWaitlist === flight.flight_id ? 'Joining…' : 'Join Waitlist'}
+                                </Button>
+                              )
+                            ) : (
+                              <Button
+                                variant={currentSelectedFlightId === flight.flight_id ? 'primary' : 'outline'}
+                                size="md"
+                                fullWidth
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectFlight(flight.flight_id);
+                                }}
+                              >
+                                {currentSelectedFlightId === flight.flight_id ? 'Selected' : 'Select'}
+                              </Button>
+                            )}
                           </div>
                         </div>
                       </Card>

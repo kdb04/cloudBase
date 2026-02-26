@@ -291,6 +291,22 @@ const cancelTicket = async (req, res) => {
                     if (priceErr) console.error(`[CANCEL] Error updating dynamic pricing: ${priceErr.message}`);
                 });
 
+                // Notify first confirmed waitlist entry (set by trigger)
+                db.query(
+                    `SELECT w.waitlist_id, w.flight_id, u.email, f.source, f.destination, f.date
+                     FROM waitlist w
+                     JOIN users u ON w.user_id = u.user_id
+                     JOIN flights f ON w.flight_id = f.flight_id
+                     WHERE w.flight_id = ? AND w.status = 'confirmed'
+                     ORDER BY w.requested_at ASC LIMIT 1`,
+                    [ticket.flight_id],
+                    (wErr, wResults) => {
+                        if (!wErr && wResults.length > 0) {
+                            sendWaitlistConfirmationEmail(wResults[0].email, wResults[0]);
+                        }
+                    }
+                );
+
                 // Send cancellation email
                 sendCancellationEmail(userEmail, ticket, refundInfo);
 
@@ -421,6 +437,128 @@ const getMyTickets = (req, res) => {
     });
 };
 
+const sendWaitlistConfirmationEmail = (email, entry) => {
+    const mailOptions = {
+        from: `"CloudBase" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: `Seat Available – Action Required for Flight #${entry.flight_id}`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background-color: #22c55e; color: white; padding: 24px; border-radius: 8px 8px 0 0; text-align: center;">
+                    <h1 style="margin: 0;">A Seat Is Available!</h1>
+                    <p style="margin: 8px 0 0;">Flight #${entry.flight_id}</p>
+                </div>
+                <div style="border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; padding: 24px;">
+                    <p style="color: #374151;">Good news! Your waitlist spot for the following flight has been confirmed:</p>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Route</td>
+                            <td style="padding: 8px 0; font-weight: bold;">${entry.source} → ${entry.destination}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #6b7280;">Date</td>
+                            <td style="padding: 8px 0; font-weight: bold;">${entry.date}</td>
+                        </tr>
+                    </table>
+                    <p style="color: #374151; margin-top: 16px;">
+                        Please log in to CloudBase and book your seat as soon as possible before the spot expires.
+                    </p>
+                    <p style="color: #6b7280; margin-top: 24px; font-size: 12px; text-align: center;">
+                        If you no longer need this seat, you can leave the waitlist from your bookings page.
+                    </p>
+                </div>
+            </div>
+        `
+    };
+
+    transporter.sendMail(mailOptions)
+        .then(() => console.log(`[WAITLIST] Confirmation email sent to: ${email}`))
+        .catch((err) => console.error(`[WAITLIST] Failed to send confirmation email: ${err.message}`));
+};
+
+const joinWaitlist = (req, res) => {
+    const { flight_id, class: travelClass } = req.body;
+    const user_id = req.user.id;
+    console.log(`[WAITLIST] User ${user_id} joining waitlist for flight ${flight_id}`);
+
+    db.query("SELECT available_seats FROM flights WHERE flight_id = ?", [flight_id], (err, flightResults) => {
+        if (err) return res.status(500).json({ message: "Error checking flight", error: err });
+        if (flightResults.length === 0) return res.status(404).json({ message: "Flight not found" });
+        if (flightResults[0].available_seats > 0) {
+            return res.status(400).json({ message: "Flight still has available seats" });
+        }
+
+        db.query(
+            "SELECT waitlist_id FROM waitlist WHERE user_id = ? AND flight_id = ? AND status IN ('waiting','confirmed')",
+            [user_id, flight_id],
+            (dupErr, dupResults) => {
+                if (dupErr) return res.status(500).json({ message: "Error checking waitlist", error: dupErr });
+                if (dupResults.length > 0) return res.status(409).json({ message: "Already on waitlist for this flight" });
+
+                db.query(
+                    "INSERT INTO waitlist (user_id, flight_id, class) VALUES (?, ?, ?)",
+                    [user_id, flight_id, travelClass || null],
+                    (insertErr, insertResults) => {
+                        if (insertErr) return res.status(500).json({ message: "Error joining waitlist", error: insertErr });
+                        console.log(`[WAITLIST] User ${user_id} joined waitlist ${insertResults.insertId} for flight ${flight_id}`);
+                        return res.status(201).json({ waitlist_id: insertResults.insertId });
+                    }
+                );
+            }
+        );
+    });
+};
+
+const leaveWaitlist = (req, res) => {
+    const { waitlist_id } = req.params;
+    const user_id = req.user.id;
+    console.log(`[WAITLIST] User ${user_id} leaving waitlist ${waitlist_id}`);
+
+    db.query(
+        "SELECT waitlist_id FROM waitlist WHERE waitlist_id = ? AND user_id = ?",
+        [waitlist_id, user_id],
+        (err, results) => {
+            if (err) return res.status(500).json({ message: "Error finding waitlist entry", error: err });
+            if (results.length === 0) return res.status(404).json({ message: "Waitlist entry not found" });
+
+            db.query(
+                "UPDATE waitlist SET status = 'cancelled' WHERE waitlist_id = ?",
+                [waitlist_id],
+                (updateErr) => {
+                    if (updateErr) return res.status(500).json({ message: "Error leaving waitlist", error: updateErr });
+                    console.log(`[WAITLIST] Waitlist entry ${waitlist_id} cancelled`);
+                    return res.status(200).json({ message: "Removed from waitlist" });
+                }
+            );
+        }
+    );
+};
+
+const getMyWaitlist = (req, res) => {
+    const user_id = req.user.id;
+    console.log(`[WAITLIST] Fetching waitlist for user ${user_id}`);
+
+    const query = `
+        SELECT w.waitlist_id, w.flight_id, w.class, w.requested_at, w.status,
+               f.source, f.destination, f.departure, f.arrival, f.date, f.price,
+               a.airline_name
+        FROM waitlist w
+        JOIN flights f ON w.flight_id = f.flight_id
+        LEFT JOIN airlines a ON f.airline_id = a.airline_id
+        WHERE w.user_id = ?
+        ORDER BY w.requested_at DESC
+    `;
+
+    db.query(query, [user_id], (err, results) => {
+        if (err) {
+            console.log(`[WAITLIST] FAILED - Error fetching waitlist for user ${user_id}: ${err.message}`);
+            return res.status(500).json({ message: "Error fetching waitlist", error: err });
+        }
+        console.log(`[WAITLIST] Found ${results.length} waitlist entries for user ${user_id}`);
+        return res.status(200).json({ waitlist: results });
+    });
+};
+
 const getLocations = (req, res) => {
     const { q } = req.query;
     const searchTerm = `${q || ''}%`;
@@ -440,4 +578,4 @@ const getLocations = (req, res) => {
     });
 };
 
-module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets, getLocations };
+module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets, getLocations, joinWaitlist, leaveWaitlist, getMyWaitlist };
