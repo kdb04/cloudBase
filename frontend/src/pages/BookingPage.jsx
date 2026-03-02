@@ -867,9 +867,17 @@ const Booking = ({ isLoggedIn }) => {
                     value={travelClass}
                     onChange={(e) => setTravelClass(e.target.value)}
                     disabled={selectedSeats.length > 0}
-                    className={`block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 h-10 px-3 pr-8 py-2 focus:ring-2 focus:ring-primary focus:border-primary ${
+                    className={`appearance-none block w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 h-10 px-3 pr-10 py-2 focus:ring-2 focus:ring-primary focus:border-primary ${
                       selectedSeats.length > 0 ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
+                    style={{
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 12px center',
+                      backgroundSize: '1rem',
+                      backgroundImage: `url("data:image/svg+xml;utf8,${encodeURIComponent(
+                        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='currentColor'><path fillRule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z' clipRule='evenodd'/></svg>"
+                      )}")`
+                    }}
                   >
                     {CABIN_CLASSES.map((cabin) => (
                       <option key={cabin.value} value={cabin.value}>
