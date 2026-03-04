@@ -97,6 +97,93 @@ const sendBookingConfirmation = (email, ticket) => {
         .catch((err) => console.error(`[BOOKING] Failed to send confirmation email: ${err.message}`));
 };
 
+const awardLoyaltyPoints = (userId, ticketId, pointsEarned) => {
+    db.beginTransaction((txErr) => {
+        if (txErr) { console.error('[LOYALTY] Transaction start error:', txErr.message); return; }
+        db.query(
+            `INSERT INTO loyalty_points (user_id, points, tier)
+             VALUES (?, ?, 'Bronze')
+             ON DUPLICATE KEY UPDATE
+               points = points + ?,
+               tier = CASE
+                 WHEN points + ? >= 10000 THEN 'Platinum'
+                 WHEN points + ? >= 5000  THEN 'Gold'
+                 WHEN points + ? >= 1000  THEN 'Silver'
+                 ELSE 'Bronze'
+               END`,
+            [userId, pointsEarned, pointsEarned, pointsEarned, pointsEarned, pointsEarned],
+            (lpErr) => {
+                if (lpErr) {
+                    console.error('[LOYALTY] Error upserting loyalty_points:', lpErr.message);
+                    return db.rollback(() => {});
+                }
+                db.query(
+                    `INSERT INTO point_transactions (user_id, ticket_id, points_earned, points_redeemed)
+                     VALUES (?, ?, ?, 0)`,
+                    [userId, ticketId, pointsEarned],
+                    (ptErr) => {
+                        if (ptErr) {
+                            console.error('[LOYALTY] Error inserting point_transaction:', ptErr.message);
+                            return db.rollback(() => {});
+                        }
+                        db.commit((commitErr) => {
+                            if (commitErr) {
+                                console.error('[LOYALTY] Commit error:', commitErr.message);
+                                db.rollback(() => {});
+                            }
+                        });
+                    }
+                );
+            }
+        );
+    });
+};
+
+const reverseLoyaltyPoints = (userId, earned, onComplete) => {
+    db.beginTransaction((txErr) => {
+        if (txErr) {
+            console.error('[LOYALTY] Transaction start error:', txErr.message);
+            return onComplete(txErr);
+        }
+        db.query(
+            `UPDATE loyalty_points
+             SET points = GREATEST(0, points - ?),
+                 tier = CASE
+                   WHEN GREATEST(0, points - ?) >= 10000 THEN 'Platinum'
+                   WHEN GREATEST(0, points - ?) >= 5000  THEN 'Gold'
+                   WHEN GREATEST(0, points - ?) >= 1000  THEN 'Silver'
+                   ELSE 'Bronze'
+                 END
+             WHERE user_id = ?`,
+            [earned, earned, earned, earned, userId],
+            (lpErr) => {
+                if (lpErr) {
+                    console.error('[LOYALTY] Error reversing loyalty_points:', lpErr.message);
+                    return db.rollback(() => onComplete(lpErr));
+                }
+                db.query(
+                    `INSERT INTO point_transactions (user_id, ticket_id, points_earned, points_redeemed)
+                     VALUES (?, NULL, 0, ?)`,
+                    [userId, earned],
+                    (rptErr) => {
+                        if (rptErr) {
+                            console.error('[LOYALTY] Error inserting reversal transaction:', rptErr.message);
+                            return db.rollback(() => onComplete(rptErr));
+                        }
+                        db.commit((commitErr) => {
+                            if (commitErr) {
+                                console.error('[LOYALTY] Commit error:', commitErr.message);
+                                return db.rollback(() => onComplete(commitErr));
+                            }
+                            onComplete(null);
+                        });
+                    }
+                );
+            }
+        );
+    });
+};
+
 const bookTicket = (req, res) => {
     const { passenger_no, class: travelClass, food_preference,  source, destination, seat_no, flight_id, transaction_id } = req.body;
     console.log(`[BOOKING] Creating ticket - Flight: ${flight_id}, Passenger: ${passenger_no}, Route: ${source} -> ${destination}`);
@@ -138,7 +225,7 @@ const bookTicket = (req, res) => {
 
         // Fetch flight details and send confirmation email
         const userEmail = req.user.email;
-        db.query("SELECT departure, arrival, date FROM flights WHERE flight_id = ?", [flight_id], (flightErr, flightResults) => {
+        db.query("SELECT departure, arrival, date, price FROM flights WHERE flight_id = ?", [flight_id], (flightErr, flightResults) => {
             const flight = flightResults && flightResults[0] ? flightResults[0] : {};
             sendBookingConfirmation(userEmail, {
                 ticket_id: results.insertId,
@@ -154,6 +241,12 @@ const bookTicket = (req, res) => {
                 payment_status: paymentStatus,
                 transaction_id
             });
+
+            // Award loyalty points based on flight price
+            const pointsEarned = Math.floor(flight.price || 0);
+            if (pointsEarned > 0) {
+                awardLoyaltyPoints(userId, results.insertId, pointsEarned);
+            }
         });
 
         console.log(`[BOOKING] SUCCESS - Ticket ID: ${results.insertId} created for flight ${flight_id}`);
@@ -279,44 +372,60 @@ const cancelTicket = async (req, res) => {
                 }
             }
 
-            // Delete the ticket
-            db.query("DELETE FROM ticket WHERE ticket_id = ?", [ticket_id], (deleteErr) => {
-                if (deleteErr) {
-                    console.log(`[CANCEL] FAILED - Error deleting ticket ${ticket_id}: ${deleteErr.message}`);
-                    return res.status(500).json({ message: "Error cancelling flight", error: deleteErr });
-                }
+            // Look up earned points, reverse them, then delete the ticket — all sequentially
+            db.query(
+                `SELECT points_earned FROM point_transactions WHERE ticket_id = ? AND user_id = ?`,
+                [ticket_id, req.user.id],
+                (_ptErr, ptRows) => {
+                    const earned = ptRows?.[0]?.points_earned || 0;
 
-                // Update dynamic pricing using flight_id fetched before deletion
-                db.query("CALL dynamic_pricing(?)", [ticket.flight_id], (priceErr) => {
-                    if (priceErr) console.error(`[CANCEL] Error updating dynamic pricing: ${priceErr.message}`);
-                });
+                    const deleteTicket = () => {
+                        db.query("DELETE FROM ticket WHERE ticket_id = ?", [ticket_id], (deleteErr) => {
+                            if (deleteErr) {
+                                console.log(`[CANCEL] FAILED - Error deleting ticket ${ticket_id}: ${deleteErr.message}`);
+                                return res.status(500).json({ message: "Error cancelling flight", error: deleteErr });
+                            }
 
-                // Notify first confirmed waitlist entry (set by trigger)
-                db.query(
-                    `SELECT w.waitlist_id, w.flight_id, u.email, f.source, f.destination, f.date
-                     FROM waitlist w
-                     JOIN users u ON w.user_id = u.user_id
-                     JOIN flights f ON w.flight_id = f.flight_id
-                     WHERE w.flight_id = ? AND w.status = 'confirmed'
-                     ORDER BY w.requested_at ASC LIMIT 1`,
-                    [ticket.flight_id],
-                    (wErr, wResults) => {
-                        if (!wErr && wResults.length > 0) {
-                            sendWaitlistConfirmationEmail(wResults[0].email, wResults[0]);
-                        }
+                            // Update dynamic pricing using flight_id fetched before deletion
+                            db.query("CALL dynamic_pricing(?)", [ticket.flight_id], (priceErr) => {
+                                if (priceErr) console.error(`[CANCEL] Error updating dynamic pricing: ${priceErr.message}`);
+                            });
+
+                            // Notify first confirmed waitlist entry (set by trigger)
+                            db.query(
+                                `SELECT w.waitlist_id, w.flight_id, u.email, f.source, f.destination, f.date
+                                 FROM waitlist w
+                                 JOIN users u ON w.user_id = u.user_id
+                                 JOIN flights f ON w.flight_id = f.flight_id
+                                 WHERE w.flight_id = ? AND w.status = 'confirmed'
+                                 ORDER BY w.requested_at ASC LIMIT 1`,
+                                [ticket.flight_id],
+                                (wErr, wResults) => {
+                                    if (!wErr && wResults.length > 0) {
+                                        sendWaitlistConfirmationEmail(wResults[0].email, wResults[0]);
+                                    }
+                                }
+                            );
+
+                            // Send cancellation email
+                            sendCancellationEmail(userEmail, ticket, refundInfo);
+
+                            console.log(`[CANCEL] SUCCESS - Ticket ID: ${ticket_id} cancelled`);
+                            return res.status(200).json({
+                                message: "Flight booking cancelled successfully",
+                                refund_status: refundInfo.status,
+                                refund_id: refundInfo.refund_id,
+                            });
+                        });
+                    };
+
+                    if (earned > 0) {
+                        reverseLoyaltyPoints(req.user.id, earned, (_loyaltyErr) => deleteTicket());
+                    } else {
+                        deleteTicket();
                     }
-                );
-
-                // Send cancellation email
-                sendCancellationEmail(userEmail, ticket, refundInfo);
-
-                console.log(`[CANCEL] SUCCESS - Ticket ID: ${ticket_id} cancelled`);
-                return res.status(200).json({
-                    message: "Flight booking cancelled successfully",
-                    refund_status: refundInfo.status,
-                    refund_id: refundInfo.refund_id,
-                });
-            });
+                }
+            );
         }
     );
 };
@@ -578,4 +687,33 @@ const getLocations = (req, res) => {
     });
 };
 
-module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets, getLocations, joinWaitlist, leaveWaitlist, getMyWaitlist };
+const getLoyaltyStatus = (req, res) => {
+    const userId = req.user.id;
+    db.query(
+        `SELECT lp.points, lp.tier, lp.updated_at,
+                pt.pt_id, pt.ticket_id, pt.points_earned, pt.points_redeemed, pt.created_at AS tx_date
+         FROM loyalty_points lp
+         LEFT JOIN point_transactions pt ON pt.user_id = lp.user_id
+         WHERE lp.user_id = ?
+         ORDER BY pt.created_at DESC
+         LIMIT 20`,
+        [userId],
+        (err, rows) => {
+            if (err) return res.status(500).json({ error: 'DB error' });
+            if (!rows.length) return res.json({ points: 0, tier: 'Bronze', transactions: [] });
+            const { points, tier, updated_at } = rows[0];
+            const transactions = rows
+                .filter(r => r.pt_id)
+                .map(r => ({
+                    id: r.pt_id,
+                    ticket_id: r.ticket_id,
+                    points_earned: r.points_earned,
+                    points_redeemed: r.points_redeemed,
+                    date: r.tx_date,
+                }));
+            res.json({ points, tier, updated_at, transactions });
+        }
+    );
+};
+
+module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets, getLocations, joinWaitlist, leaveWaitlist, getMyWaitlist, getLoyaltyStatus };

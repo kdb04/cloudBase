@@ -11,6 +11,7 @@ export const ENDPOINTS = {
   TAKEN_SEATS: (flightId) => `/bookings/taken-seats/${flightId}`,
   MY_TICKETS: '/bookings/my-tickets',
   MY_WAITLIST: '/bookings/my-waitlist',
+  LOYALTY: '/bookings/loyalty',
   JOIN_WAITLIST: '/bookings/waitlist',
   LEAVE_WAITLIST: (id) => `/bookings/waitlist/${id}`,
   // Payment

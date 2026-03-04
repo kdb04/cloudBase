@@ -49,6 +49,7 @@ const Navbar = () => {
     { path: '/booking', label: 'Book Flights' },
     { path: '/flight-status', label: 'Flight Status' },
     ...(isLoggedIn ? [{ path: '/my-bookings', label: 'My Bookings' }] : []),
+    ...(isLoggedIn ? [{ path: '/loyalty', label: 'Loyalty' }] : []),
     { path: '/about', label: 'About' },
     { path: '/contact', label: 'Contact' },
   ];
