@@ -12,6 +12,7 @@ export const ENDPOINTS = {
   MY_TICKETS: '/bookings/my-tickets',
   MY_WAITLIST: '/bookings/my-waitlist',
   LOYALTY: '/bookings/loyalty',
+  PROFILE: '/bookings/profile',
   JOIN_WAITLIST: '/bookings/waitlist',
   LEAVE_WAITLIST: (id) => `/bookings/waitlist/${id}`,
   // Payment

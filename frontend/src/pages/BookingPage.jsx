@@ -14,7 +14,7 @@ import {
   Plus,
   Check
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Layout } from '../components/layout';
 import { Card, Button, Input, Badge, SeatMap, LocationInput } from '../components/ui';
 import { loadStripe } from '@stripe/stripe-js';
@@ -35,6 +35,7 @@ const Booking = ({ isLoggedIn }) => {
   const [tripType, setTripType] = useState('roundtrip');
   const [travelClass, setTravelClass] = useState('economy');
   const [passengerNo, setPassengerNo] = useState(1);
+  const [passengerProfile, setPassengerProfile] = useState(undefined); // undefined=loading, null=no profile, object=profile
 
 
   const [source, setSource] = useState('');
@@ -107,6 +108,16 @@ const Booking = ({ isLoggedIn }) => {
       navigate('/login');
     }
   }, [isLoggedIn, navigate]);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const controller = new AbortController();
+    fetch(getApiUrl(ENDPOINTS.PROFILE), { headers: getAuthHeaders(), signal: controller.signal })
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(data => setPassengerProfile(data.profile || null))
+      .catch(err => { if (err.name !== 'AbortError') setPassengerProfile(null); });
+    return () => controller.abort();
+  }, [isLoggedIn]);
 
   const handleSeatsChange = (seats) => {
     setSelectedSeats(seats);
@@ -491,7 +502,6 @@ const Booking = ({ isLoggedIn }) => {
       try {
         for (const seat of selectedSeats) {
           const bookingData = {
-            passenger_no: passengerNo,
             class: travelClass,
             food_preference: foodPreference,
             date: leg.date,
@@ -545,7 +555,7 @@ const Booking = ({ isLoggedIn }) => {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify({
-              passenger_no: passengerNo, class: travelClass,
+              class: travelClass,
               food_preference: foodPreference, date: departureDate,
               source, destination,
               seat_no: seat.seatNo, flight_id: selectedFlightId,
@@ -560,7 +570,7 @@ const Booking = ({ isLoggedIn }) => {
             method: 'POST',
             headers: getAuthHeaders(),
             body: JSON.stringify({
-              passenger_no: passengerNo, class: travelClass,
+              class: travelClass,
               food_preference: foodPreference, date: returnDate,
               source: destination, destination: source,
               seat_no: seat.seatNo, flight_id: selectedReturnFlightId,
@@ -588,7 +598,6 @@ const Booking = ({ isLoggedIn }) => {
     try {
       for (const seat of selectedSeats) {
         const bookingData = {
-          passenger_no: passengerNo,
           class: travelClass,
           food_preference: foodPreference,
           date: departureDate,
@@ -843,8 +852,12 @@ const Booking = ({ isLoggedIn }) => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 text-center">
-                <div className="md:col-span-1">
+              <div className={`grid grid-cols-1 mb-6 text-center ${
+                isMultiCity
+                  ? 'md:grid-cols-[1fr_1fr_1fr_auto] gap-4 items-end'
+                  : 'md:grid-cols-[1fr_1fr_1fr_1fr] gap-x-10 gap-y-6'
+              }`}>
+                <div>
                   <Input
                     label="Passengers"
                     icon={Users}
@@ -856,7 +869,7 @@ const Booking = ({ isLoggedIn }) => {
                   />
                 </div>
 
-                <div className="md:col-span-1 relative">
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Cabin Class
                     {selectedSeats.length > 0 && (
@@ -887,6 +900,7 @@ const Booking = ({ isLoggedIn }) => {
                   </select>
                 </div>
 
+                {isMultiCity && <div className="hidden md:block w-9" />}
               </div>
 
               <div className="flex justify-end items-center gap-3">
@@ -902,6 +916,17 @@ const Booking = ({ isLoggedIn }) => {
               </div>
             </Card>
           </motion.div>
+
+          {passengerProfile === null && (
+            <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-300 dark:border-yellow-700 rounded-lg flex items-center justify-between">
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                Complete your passenger profile to enable booking.
+              </p>
+              <Link to="/profile" className="ml-4 text-sm font-medium text-primary hover:underline whitespace-nowrap">
+                Go to Profile →
+              </Link>
+            </div>
+          )}
 
           {error && (
             <motion.div
@@ -1357,7 +1382,7 @@ const Booking = ({ isLoggedIn }) => {
                       <Button variant="outline" onClick={() => setShowRerouteModal(true)}>
                         Find Alternate Routes
                       </Button>
-                      <Button onClick={handleBookingInitiate} size="lg">
+                      <Button onClick={handleBookingInitiate} size="lg" disabled={!passengerProfile}>
                         Book Selected Flight
                       </Button>
                     </div>
@@ -1415,7 +1440,7 @@ const Booking = ({ isLoggedIn }) => {
                             <Button
                               size="sm"
                               onClick={() => handleMultiCityBookingInitiate(index)}
-                              disabled={index > 0 && !legTicketIds[index - 1]}
+                              disabled={!passengerProfile || (index > 0 && !legTicketIds[index - 1])}
                             >
                               Book Leg {index + 1}
                             </Button>
@@ -1576,7 +1601,7 @@ const Booking = ({ isLoggedIn }) => {
                     <Button
                       size="lg"
                       onClick={handleCombinedRoundTripPayment}
-                      disabled={selectedSeats.length === 0 || returnSeats.length === 0}
+                      disabled={!passengerProfile || selectedSeats.length === 0 || returnSeats.length === 0}
                     >
                       Book Round Trip — {formatPrice(roundTripTotalPrice)}
                     </Button>

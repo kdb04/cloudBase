@@ -28,7 +28,7 @@ const HomePage = () => {
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherError, setWeatherError] = useState('');
 
-  const fetchWeather = useCallback(async (targetCity) => {
+  const fetchWeather = useCallback(async (targetCity, signal) => {
     if (!WEATHER_API_KEY) {
       setWeatherError('API key not configured');
       setWeatherLoading(false);
@@ -38,7 +38,8 @@ const HomePage = () => {
     setWeatherError('');
     try {
       const res = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(targetCity)}&units=metric&appid=${WEATHER_API_KEY}`
+        `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(targetCity)}&units=metric&appid=${WEATHER_API_KEY}`,
+        { signal }
       );
       if (!res.ok) {
         throw new Error(res.status === 404 ? 'City not found' : 'Failed to fetch weather');
@@ -53,14 +54,17 @@ const HomePage = () => {
         cityName: data.name,
       });
     } catch (err) {
+      if (err.name === 'AbortError') return;
       setWeatherError(err.message);
     } finally {
-      setWeatherLoading(false);
+      if (!signal?.aborted) setWeatherLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchWeather(city);
+    const controller = new AbortController();
+    fetchWeather(city, controller.signal);
+    return () => controller.abort();
   }, [city, fetchWeather]);
 
   const handleCitySearch = (e) => {

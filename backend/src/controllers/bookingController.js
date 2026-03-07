@@ -184,74 +184,164 @@ const reverseLoyaltyPoints = (userId, earned, onComplete) => {
     });
 };
 
+const getMyProfile = (req, res) => {
+    const userId = req.user?.id;
+    if(!userId) return res.status(401).json({ message: "Unauthorized" });
+
+    db.query('SELECT * FROM commuters WHERE user_id = ?', [userId], (err, rows) => {
+        if (err){
+            console.error(`[PROFILE] FAILED - Error fetching profile for user ${userId}: ${err.message}`);
+            return res.status(500).json({ message: 'DB error', error: err });
+        }
+        if (!rows.length) return res.json({ profile: null, phones: [] });
+        const profile = rows[0];
+        db.query('SELECT phone_no FROM commuter_phone WHERE passenger_no = ?', [profile.passenger_no], (pErr, pRows) => {
+            if (pErr) {
+                console.error(`[PROFILE] FAILED - Error fetching phone numbers for user ${userId}: ${pErr.message}`);
+                return res.status(500).json({ message: 'DB error', error: pErr });
+            }
+            return res.json({ profile, phones: pRows.map(r => String(r.phone_no)) });
+        });
+    });
+};
+
+const upsertMyProfile = (req, res) => {
+    const userId = req.user?.id;
+    const { fname, mname, lname, passport_no, age, phone } = req.body;
+
+    db.beginTransaction((txErr) => {
+        if (txErr) return res.status(500).json({ message: 'Transaction error', error: txErr });
+
+        db.query('SELECT passenger_no FROM commuters WHERE user_id = ?', [userId], (err, rows) => {
+            if (err) return db.rollback(() => res.status(500).json({ message: 'DB error', error: err }));
+
+            const finalize = (passenger_no) => {
+                if (!phone) {
+                    return db.commit((commitErr) => {
+                        if (commitErr) return db.rollback(() => res.status(500).json({ message: 'Commit error' }));
+                        return res.json({ message: 'Profile saved' });
+                    });
+                }
+                const phoneNum = Number(phone);
+
+                const phoneStr = String(phone).replace(/\D/g, '');
+                if(!phoneStr || phoneStr.length < 7 || phoneStr.length > 15){
+                    return db.rollback(() => res.status(400).json({ message: 'Invalid phone number format' }));
+                }
+
+                db.query('DELETE FROM commuter_phone WHERE passenger_no = ?', [passenger_no], (delErr) => {
+                    if (delErr) return db.rollback(() => res.status(500).json({ message: 'Phone delete error', error: delErr }));
+                    db.query('INSERT INTO commuter_phone (passenger_no, phone_no) VALUES (?, ?)', [passenger_no, phoneStr], (insPhoneErr) => {
+                        if (insPhoneErr) return db.rollback(() => res.status(500).json({ message: 'Phone insert error', error: insPhoneErr }));
+                        db.commit((commitErr) => {
+                            if (commitErr) return db.rollback(() => res.status(500).json({ message: 'Commit error' }));
+                            return res.json({ message: 'Profile saved' });
+                        });
+                    });
+                });
+            };
+
+            if (rows.length > 0) {
+                const passenger_no = rows[0].passenger_no;
+                db.query(
+                    'UPDATE commuters SET fname=?, mname=?, lname=?, passport_no=?, age=? WHERE user_id=?',
+                    [fname, mname || null, lname, passport_no, age, userId],
+                    (upErr) => {
+                        if (upErr) return db.rollback(() => res.status(500).json({ message: 'Update error', error: upErr }));
+                        finalize(passenger_no);
+                    }
+                );
+            } else {
+                db.query(
+                    'INSERT INTO commuters (passport_no, fname, mname, lname, age, user_id) VALUES (?, ?, ?, ?, ?, ?)',
+                    [passport_no, fname, mname || null, lname, age, userId],
+                    (insErr, insResult) => {
+                        if (insErr) return db.rollback(() => res.status(500).json({ message: 'Insert error', error: insErr }));
+                        finalize(insResult.insertId);
+                    }
+                );
+            }
+        });
+    });
+};
+
 const bookTicket = (req, res) => {
-    const { passenger_no, class: travelClass, food_preference,  source, destination, seat_no, flight_id, transaction_id } = req.body;
-    console.log(`[BOOKING] Creating ticket - Flight: ${flight_id}, Passenger: ${passenger_no}, Route: ${source} -> ${destination}`);
-
-    // Check flight status before booking
-    db.query("SELECT status FROM Flights WHERE flight_id = ?", [flight_id], (statusErr, statusResults) => {
-        if (statusErr) {
-            console.log(`[BOOKING] FAILED - Error checking flight status: ${statusErr.message}`);
-            return res.status(500).json({ message: "Error checking flight status", error: statusErr });
-        }
-        if (statusResults.length === 0) {
-            console.log(`[BOOKING] FAILED - Flight ${flight_id} not found`);
-            return res.status(404).json({ message: "Flight not found" });
-        }
-        if (statusResults[0].status !== 'scheduled') {
-            console.log(`[BOOKING] FAILED - Flight ${flight_id} is not available for booking (status: ${statusResults[0].status})`);
-            return res.status(400).json({ message: `Flight is currently ${statusResults[0].status} and cannot be booked` });
-        }
-
-    const paymentStatus = transaction_id ? 'Paid' : 'Pending';
+    const { class: travelClass, food_preference, source, destination, seat_no, flight_id, transaction_id } = req.body;
     const userId = req.user?.id;
     if (!userId) {
         console.log(`[BOOKING] FAILED - User not authenticated`);
         return res.status(401).json({ message: "User authentication required" });
     }
-    const query = "INSERT INTO ticket (passenger_no, class, food_preference, source, destination, seat_no, flight_id, transaction_id, payment_status, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-    db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id, transaction_id, paymentStatus, userId], (err, results) => {
-        if (err){
-            console.log(`[BOOKING] FAILED - Error booking flight ${flight_id}: ${err.message}`);
-            return res.status(500).json({ message: "Error booking flight", error: err});
+    // Look up passenger_no from commuters table
+    db.query('SELECT passenger_no FROM commuters WHERE user_id = ?', [userId], (profErr, profRows) => {
+        if (profErr) return res.status(500).json({ message: 'Error looking up passenger profile', error: profErr });
+        if (!profRows.length) {
+            return res.status(400).json({ message: 'Please complete your passenger profile before booking.' });
         }
+        const passenger_no = profRows[0].passenger_no;
+        console.log(`[BOOKING] Creating ticket - Flight: ${flight_id}, Passenger: ${passenger_no}, Route: ${source} -> ${destination}`);
 
-        db.query("CALL dynamic_pricing(?)", [flight_id], (priceErr) => {
-            if(priceErr){
-                console.error("Error updating the price:", priceErr);
+        // Check flight status before booking
+        db.query("SELECT status FROM Flights WHERE flight_id = ?", [flight_id], (statusErr, statusResults) => {
+            if (statusErr) {
+                console.log(`[BOOKING] FAILED - Error checking flight status: ${statusErr.message}`);
+                return res.status(500).json({ message: "Error checking flight status", error: statusErr });
             }
-        });
+            if (statusResults.length === 0) {
+                console.log(`[BOOKING] FAILED - Flight ${flight_id} not found`);
+                return res.status(404).json({ message: "Flight not found" });
+            }
+            if (statusResults[0].status !== 'scheduled') {
+                console.log(`[BOOKING] FAILED - Flight ${flight_id} is not available for booking (status: ${statusResults[0].status})`);
+                return res.status(400).json({ message: `Flight is currently ${statusResults[0].status} and cannot be booked` });
+            }
 
-        // Fetch flight details and send confirmation email
-        const userEmail = req.user.email;
-        db.query("SELECT departure, arrival, date, price FROM flights WHERE flight_id = ?", [flight_id], (flightErr, flightResults) => {
-            const flight = flightResults && flightResults[0] ? flightResults[0] : {};
-            sendBookingConfirmation(userEmail, {
-                ticket_id: results.insertId,
-                flight_id,
-                source,
-                destination,
-                date: flight.date,
-                departure: flight.departure,
-                arrival: flight.arrival,
-                class: travelClass,
-                seat_no: seat_no,
-                food_preference,
-                payment_status: paymentStatus,
-                transaction_id
+            const paymentStatus = transaction_id ? 'Paid' : 'Pending';
+            const query = "INSERT INTO ticket (passenger_no, class, food_preference, source, destination, seat_no, flight_id, transaction_id, payment_status, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            db.query(query, [passenger_no, travelClass, food_preference, source, destination, seat_no, flight_id, transaction_id, paymentStatus, userId], (err, results) => {
+                if (err) {
+                    console.log(`[BOOKING] FAILED - Error booking flight ${flight_id}: ${err.message}`);
+                    return res.status(500).json({ message: "Error booking flight", error: err });
+                }
+
+                db.query("CALL dynamic_pricing(?)", [flight_id], (priceErr) => {
+                    if (priceErr) {
+                        console.error("Error updating the price:", priceErr);
+                    }
+                });
+
+                // Fetch flight details and send confirmation email
+                const userEmail = req.user.email;
+                db.query("SELECT departure, arrival, date, price FROM flights WHERE flight_id = ?", [flight_id], (flightErr, flightResults) => {
+                    const flight = flightResults && flightResults[0] ? flightResults[0] : {};
+                    sendBookingConfirmation(userEmail, {
+                        ticket_id: results.insertId,
+                        flight_id,
+                        source,
+                        destination,
+                        date: flight.date,
+                        departure: flight.departure,
+                        arrival: flight.arrival,
+                        class: travelClass,
+                        seat_no: seat_no,
+                        food_preference,
+                        payment_status: paymentStatus,
+                        transaction_id
+                    });
+
+                    // Award loyalty points based on flight price
+                    const pointsEarned = Math.floor(flight.price || 0);
+                    if (pointsEarned > 0) {
+                        awardLoyaltyPoints(userId, results.insertId, pointsEarned);
+                    }
+                });
+
+                console.log(`[BOOKING] SUCCESS - Ticket ID: ${results.insertId} created for flight ${flight_id}`);
+                return res.status(201).json({ message: "Flight booked successfully", ticket_id: results.insertId });
             });
-
-            // Award loyalty points based on flight price
-            const pointsEarned = Math.floor(flight.price || 0);
-            if (pointsEarned > 0) {
-                awardLoyaltyPoints(userId, results.insertId, pointsEarned);
-            }
         });
-
-        console.log(`[BOOKING] SUCCESS - Ticket ID: ${results.insertId} created for flight ${flight_id}`);
-        return res.status(201).json({ message: "Flight booked successfully", ticket_id : results.insertId });
-    });
     });
 };
 
@@ -716,4 +806,4 @@ const getLoyaltyStatus = (req, res) => {
     );
 };
 
-module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets, getLocations, joinWaitlist, leaveWaitlist, getMyWaitlist, getLoyaltyStatus };
+module.exports = { bookTicket, cancelTicket, getAvailableFlights, getAlternateFlights, getFlightStatus, getTakenSeats, getMyTickets, getLocations, joinWaitlist, leaveWaitlist, getMyWaitlist, getLoyaltyStatus, getMyProfile, upsertMyProfile };

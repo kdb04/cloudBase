@@ -10,3 +10,4 @@ export { default as AdminPage } from './AdminPage';
 export { default as FlightStatusPage } from './FlightStatusPage';
 export { default as MyBookingsPage } from './MyBookingsPage';
 export { default as LoyaltyPage } from './LoyaltyPage';
+export { default as ProfilePage } from './ProfilePage';

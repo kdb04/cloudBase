@@ -274,3 +274,17 @@ WHERE status != 'canceled';
 
 ALTER TABLE flights
     MODIFY COLUMN status ENUM('scheduled','in air','completed','canceled') NOT NULL DEFAULT 'scheduled';
+
+
+-- 14. Make commuters.passenger_no AUTO_INCREMENT
+
+ALTER TABLE commuter_phone DROP FOREIGN KEY commuter_phone_ibfk_1;
+ALTER TABLE ticket DROP FOREIGN KEY ticket_ibfk_2;
+
+ALTER TABLE commuters MODIFY passenger_no BIGINT NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE commuter_phone ADD CONSTRAINT commuter_phone_ibfk_1
+    FOREIGN KEY (passenger_no) REFERENCES commuters(passenger_no);
+
+ALTER TABLE ticket ADD CONSTRAINT ticket_ibfk_2
+    FOREIGN KEY (passenger_no) REFERENCES commuters(passenger_no);

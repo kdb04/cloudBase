@@ -34,25 +34,29 @@ function AdminPage() {
     setMessageType(type);
   };
 
-  const fetchFlights = async () => {
+  const fetchFlights = async (signal) => {
     try {
       setLoading(true);
       const response = await fetch(getApiUrl(ENDPOINTS.ADMIN_FLIGHTS), {
         headers: getAuthHeaders(),
+        signal,
       });
       if (!response.ok) throw new Error('Failed to fetch flights');
       const data = await response.json();
       setFlights(data.flights || []);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error('Error fetching flights:', err);
       showMessage('Error fetching flights', 'error');
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchFlights();
+    const controller = new AbortController();
+    fetchFlights(controller.signal);
+    return () => controller.abort();
   }, []);
 
   const updateField = (field, value) => {

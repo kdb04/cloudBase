@@ -26,21 +26,29 @@ const LocationInput = ({
       setOpen(false);
       return;
     }
+    const controller = new AbortController();
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`${getApiUrl(ENDPOINTS.LOCATIONS)}?q=${encodeURIComponent(value)}`);
+        const res = await fetch(
+          `${getApiUrl(ENDPOINTS.LOCATIONS)}?q=${encodeURIComponent(value)}`,
+          { signal: controller.signal }
+        );
         if (!res.ok) return;
         const data = await res.json();
         setSuggestions(data.locations || []);
         setOpen((data.locations || []).length > 0);
         setHighlighted(-1);
-      } catch {
+      } catch (err) {
+        if (err.name === 'AbortError') return;
         setSuggestions([]);
         setOpen(false);
       }
     }, 200);
 
-    return () => clearTimeout(debounceRef.current);
+    return () => {
+      clearTimeout(debounceRef.current);
+      controller.abort();
+    };
   }, [value]);
 
   // Close on outside click

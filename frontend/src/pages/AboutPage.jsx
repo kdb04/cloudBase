@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Compass,
@@ -184,18 +185,18 @@ const About = () => {
                 for the latest updates.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="/contact"
+                <Link
+                  to="/contact"
                   className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-hover transition-colors font-semibold"
                 >
                   Contact Us
-                </a>
-                <a
-                  href="/booking"
+                </Link>
+                <Link
+                  to="/booking"
                   className="inline-flex items-center justify-center px-6 py-3 border-2 border-primary text-primary rounded-lg hover:bg-primary/10 transition-colors font-semibold"
                 >
                   Book a Flight
-                </a>
+                </Link>
               </div>
             </div>
           </Card>

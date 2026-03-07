@@ -12,7 +12,8 @@ import {
   AdminPage,
   FlightStatusPage,
   MyBookingsPage,
-  LoyaltyPage
+  LoyaltyPage,
+  ProfilePage
 } from './pages';
 import { getRoleFromToken, hasAuthToken } from './utils/auth';
 
@@ -45,6 +46,10 @@ function App() {
             <Route
               path="/loyalty"
               element={isLoggedIn ? <LoyaltyPage /> : <Navigate to="/login" replace />}
+            />
+            <Route
+              path="/profile"
+              element={isLoggedIn ? <ProfilePage /> : <Navigate to="/login" replace />}
             />
             <Route
               path="/admin"
