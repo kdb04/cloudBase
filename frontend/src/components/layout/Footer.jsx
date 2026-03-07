@@ -47,7 +47,7 @@ const Footer = () => {
                 href="https://www.facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary hover:text-white dark:hover:text-blue-200 active:bg-primary active:text-white transition-colors"
+                className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary dark:hover:bg-indigo-500 hover:text-white dark:hover:text-white active:bg-primary active:text-white transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5" />
@@ -56,7 +56,7 @@ const Footer = () => {
                 href="https://www.x.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary hover:text-white dark:hover:text-blue-200 active:bg-primary active:text-white transition-colors"
+                className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary dark:hover:bg-indigo-500 hover:text-white dark:hover:text-white active:bg-primary active:text-white transition-colors"
                 aria-label="Twitter"
               >
                 <Twitter className="w-5 h-5" />
@@ -65,7 +65,7 @@ const Footer = () => {
                 href="https://www.instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary hover:text-white dark:hover:text-blue-200 active:bg-primary active:text-white transition-colors"
+                className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary dark:hover:bg-indigo-500 hover:text-white dark:hover:text-white active:bg-primary active:text-white transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5" />
@@ -74,7 +74,7 @@ const Footer = () => {
                 href="https://www.linkedin.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary hover:text-white dark:hover:text-blue-200 active:bg-primary active:text-white transition-colors"
+                className="p-2 bg-gray-200 dark:bg-gray-800 rounded-full hover:bg-primary dark:hover:bg-indigo-500 hover:text-white dark:hover:text-white active:bg-primary active:text-white transition-colors"
                 aria-label="LinkedIn"
               >
                 <Linkedin className="w-5 h-5" />

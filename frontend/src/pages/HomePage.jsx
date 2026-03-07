@@ -81,34 +81,49 @@ const HomePage = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-        <div className="max-w-container mx-auto px-mobile md:px-tablet lg:px-desktop py-20 md:py-32">
-          <motion.div
-            className="max-w-3xl mx-auto text-center"
-            initial="hidden"
-            animate="visible"
-            variants={fadeInUp}
-          >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-              Welcome to CloudBase
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-100 mb-8">
-              Experience seamless travel with our cutting-edge flight booking and management system
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/booking">
-                <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                  <Plane className="mr-2 w-5 h-5" />
-                  Book a Flight
-                </Button>
-              </Link>
-              <Link to="/about">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
-                  Learn More
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
+      <div className="bg-gradient-to-br from-blue-500 via-indigo-600 to-blue-700 dark:from-slate-900 dark:via-blue-900 dark:to-slate-900 text-white overflow-hidden">
+        <div className="max-w-container mx-auto px-mobile md:px-tablet lg:px-desktop py-20 md:py-28">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <motion.div
+              className="flex-1 text-center md:text-left"
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUp}
+            >
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+                Welcome to CloudBase
+              </h1>
+              <p className="text-xl md:text-2xl text-gray-100 mb-8">
+                Experience seamless travel with our cutting-edge flight booking and management system
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+                <Link to="/booking">
+                  <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                    <Plane className="mr-2 w-5 h-5" />
+                    Book a Flight
+                  </Button>
+                </Link>
+                <Link to="/about">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-white text-white hover:bg-white/10">
+                    Learn More
+                  </Button>
+                </Link>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="flex-1 flex justify-center md:justify-end"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <img
+                src="/assets/hero.png"
+                alt="Airplane"
+                className="w-72 md:w-96 lg:w-[480px] brightness-200 mix-blend-multiply dark:brightness-100 dark:mix-blend-luminosity dark:opacity-60 select-none pointer-events-none"
+              />
+            </motion.div>
+          </div>
         </div>
       </div>
 
