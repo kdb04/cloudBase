@@ -54,3 +54,4 @@ backend/src/connection/testdbconnection.js
 
 *.md
 !README.md
+deployment.txt
