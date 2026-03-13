@@ -1,99 +1,51 @@
 # cloudBase
 
-A full-stack web application for managing airport operations, flight bookings, and administrative tasks.
+A full-stack airport management system for flight bookings, user authentication, loyalty tracking, and admin operations.
 
-## Overview
+## Tech Stack
 
-This project is a comprehensive airport management system built with:
-- Frontend: React 
-- Backend: Node + Express.js
-- Database: MySQL
+- **Frontend** — React + Tailwind CSS
+- **Backend** — Node.js + Express.js
+- **Database** — MySQL
+- **Auth** — JWT + bcrypt
+- **Payments** — Stripe
 
 ## Features
 
-- User Authentication
-  - Login/Registration system
-  - Password encryption
-  - Blacklist system for suspicious emails
+### User-Facing
+- **Authentication** — Register, login, forgot password, JWT-based sessions
+- **Flight Search & Booking** — Search flights by route/date, interactive seat map, dynamic pricing based on availability
+- **Payments** — Stripe-powered checkout with a payment modal
+- **Booking Management** — View and cancel bookings, see alternative flights for cancelled routes, email confirmations sent on booking and cancellation
+- **Loyalty Program** — Points tracking and status tiers
+- **Flight Status** — Live flight status page
+- **User Profile** — View and manage account details
+- **Contact Form** — Email-based contact with backend handling
 
-- Flight Booking
-  - Search available flights
-  - Book tickets with seat selection
-  - Cancel bookings
-  - View alternative flights for cancelled bookings
-  - Dynamic pricing based on seat availability
+### Admin Panel
+- Flight schedule management
+- Runway conflict prevention (no two flights on same runway within 30 min)
+- Route monitoring
+- Dynamic pricing controls
+- Blacklist management for suspicious emails
 
-- Admin Panel
-  - Flight schedule management
-  - Runway conflict prevention
-  - Route monitoring
-  - Dynamic pricing controls
+### Real-time Information
+- Weather widget (OpenWeather API)
+- Security alerts and travel guidelines
 
-- Real-time Information
-  - Weather updates
-  - Security alerts
-  - Travel guidelines
-  - Health protocols
+## Database Design
 
-## Getting Started
+Key tables: `flights`, `ticket`, `users`, `commuters`, `airlines`, `airport`, `blacklisted_emails`
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   # Frontend
-   cd frontend
-   npm install
+Notable triggers:
+- `decrease_seats` — auto-decrement available seats on booking
+- `prevent_overbooking` — block bookings when no seats remain
+- `prevent_runway_conflict` — prevent flights on the same runway within 30 minutes
 
-   # Backend
-   cd ../backend
-   npm install
-   ```
+Stored procedures:
+- `alternative(flight_id, date)` — find alternative flights for cancelled bookings
+- `dynamic_pricing(flight_id)` — adjust prices based on seat availability
 
-3. Set up environment variables:
-   Create a `.env` file in the root directory with:
-   ```
-   DB_HOST=localhost
-   DB_USER=your_username
-   DB_PASSWORD=your_password
-   DB_NAME=ams
-   PORT=3000
-   ```
+## TODO
 
-4. Set up the database:
-   ```bash
-   mysql -u root -p < database/project.sql
-   mysql -u root -p < database/triggers.sql
-   mysql -u root -p < database/functions.sql
-   mysql -u root -p < database/views.sql
-   ```
-
-5. Start the applications:
-   ```bash
-   # Backend
-   cd backend
-   node src/app.js
-
-   # Frontend
-   cd frontend
-   npm run dev
-   ```
-
-## Key Features Implementation
-
-### Security
-- Password hashing using bcrypt
-- Email blacklist system
-- Protected admin routes
-
-### Database Features
-- Triggers for seat management
-- Stored procedures for alternative flight search
-- Dynamic pricing algorithm
-- Runway conflict prevention
-
-### Frontend Features
-- Responsive design
-- Real-time form validation
-- Interactive booking interface
-- Admin dashboard
-
+- [ ] Deployment
