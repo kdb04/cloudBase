@@ -51,7 +51,7 @@ CREATE TABLE commuter_phone (
 
 CREATE TABLE flights (
     flight_id       BIGINT PRIMARY KEY,
-    airline_id      BIGINT,
+    airline_id      INT,
     status          ENUM('scheduled','in air','completed','canceled') NOT NULL DEFAULT 'scheduled',
     source          VARCHAR(40),
     destination     VARCHAR(40),
