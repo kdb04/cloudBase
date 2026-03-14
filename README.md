@@ -2,6 +2,18 @@
 
 A full-stack airport management system for flight bookings, user authentication, loyalty tracking, and admin operations.
 
+## Live
+
+Deployed on AWS EC2 — [https://cloudbase-airport.me](https://cloudbase-airport.me)
+
+## Demo
+
+- **Email** — test@example.com
+- **Password** — Test1234!
+- **Book a flight** — Heathrow → Cape Town International, date: 01/04/2026
+- **Join a waitlist** — Mumbai → Delhi, date: 19/03/2026
+- **Stripe test card** — `4242 4242 4242 4242` (any future expiry, any CVC)
+
 ## Tech Stack
 
 - **Frontend** — React + Tailwind CSS
@@ -48,4 +60,4 @@ Stored procedures:
 
 ## TODO
 
-- [ ] Deployment
+- [x] Deployment
